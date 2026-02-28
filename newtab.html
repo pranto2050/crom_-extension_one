@@ -1,0 +1,596 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>New Tab</title>
+  <link rel="stylesheet" href="newtab.css" />
+</head>
+
+<body class="light">
+  <div id="bgImage"></div>
+<video id="bgVideo" muted loop autoplay playsinline></video>
+
+<div class="app" id="app">
+
+
+<!-- загрузка фона -->
+<input type="file" id="bgUpload" accept="image/*" hidden />
+
+<!-- BG PICKER POPOVER -->
+<div class="bg-popover" id="bgPopover" hidden>
+  <div class="bg-menu-title" data-i18n="background.title">Background settings</div>
+
+  <button type="button" class="bgp-btn" id="bgPickPhoto" data-i18n="background.uploadPhoto">Upload photo</button>
+  <button type="button" class="bgp-btn" id="bgPickVideo" data-i18n="background.uploadVideo">Upload video</button>
+
+  <div class="bgp-row">
+    <input id="bgUrlInput" class="bgp-input" placeholder="https://... (jpg/png/mp4)" data-i18n="background.urlPlaceholder" />
+    <button type="button" class="bgp-btn" id="bgUrlApply" data-i18n="background.apply">Apply</button>
+  </div>
+
+  
+
+  <button type="button" class="bgp-btn bgp-ghost" id="bgResetDefault" data-i18n="background.reset">Reset to default</button>
+</div>
+<!-- BG FOCUS EDITOR (crop-like position picker) -->
+<div class="bg-focus" id="bgFocus" hidden>
+  <div class="bg-focus-backdrop" id="bgFocusBackdrop"></div>
+
+  <div class="bg-focus-card" role="dialog" aria-modal="true">
+    <div class="bg-focus-head">
+      <div class="bg-focus-title" data-i18n="background.chooseArea">Choose visible area</div>
+      <button class="bg-focus-x" id="bgFocusClose" type="button">✕</button>
+    </div>
+
+    <div class="bg-focus-preview" id="bgFocusPreview">
+      <img id="bgFocusImg" alt="" hidden />
+      <video id="bgFocusVid" hidden autoplay muted loop playsinline></video>
+      <div class="bg-focus-hint">Drag to reposition</div>
+    </div>
+
+    <div class="bg-focus-controls">
+      <button class="bg-focus-btn" id="bgFocusBlurToggle" type="button">Blur: Off</button>
+      <button class="bg-focus-btn" id="bgFocusSoundToggle" type="button">Sound: Off</button>
+    </div>
+
+    <div class="bg-focus-actions">
+      <button class="bg-focus-btn ghost" id="bgFocusCenter" type="button" data-i18n="background.center">Center</button>
+      <button class="bg-focus-btn bg-rot"id="bgRotateLeft" type="button">↺</button>
+<button class="bg-focus-btn bg-rot" id="bgRotateRight" type="button">↻</button>
+
+
+      <div class="bg-focus-spacer"></div>
+      <button class="bg-focus-btn ghost" id="bgFocusCancel" type="button" data-i18n="background.cancel">Cancel</button>
+      <button class="bg-focus-btn primary" id="bgFocusApply" type="button" data-i18n="background.apply">Apply</button>
+    </div>
+  </div>
+</div>
+<div id="onboardingCard" class="onboarding" hidden>
+  <div class="onboarding__header">
+    <div class="onboarding__title">Watch a video to get started</div>
+    <button id="onboardingClose" class="onboarding__close" aria-label="Close">✕</button>
+  </div>
+
+  <a class="onboarding__content" id="onboardingLink" href="#" target="_blank" rel="noopener">
+    <div class="onboarding__thumb">
+      <div class="onboarding__play">▶</div>
+    </div>
+    <div class="onboarding__hint">Click to open the tutorial</div>
+  </a>
+</div>
+
+<div class="workspace" id="workspace">
+
+  <!-- ВИДЖЕТЫ -->
+  <div class="widgets" id="widgets">
+    <!-- WIDGETS (правая "страница") -->
+<main class="dashboard">
+  <div class="dash-area" id="dashArea">
+    
+<!-- SEARCH (PINNED TOP BAR) -->
+<section class="card widget search-widget" id="searchCard" data-widget="search" data-title="Search">
+  <div class="welcome-bar" id="welcomeBar">
+    <span class="welcome-text" data-i18n="widgets.welcome">Welcome,</span>
+    <button class="welcome-name" id="welcomeName" type="button">Friend</button>
+    <input class="welcome-input" id="welcomeInput" type="text"
+      placeholder="Enter your nickname" maxlength="24" autocomplete="off" data-i18n="widgets.namePlaceholder" />
+  </div>
+
+  <form id="searchForm" autocomplete="off">
+    <input id="searchInput" type="text"
+      placeholder="Search or type a URL" autocomplete="off" data-i18n="widgets.searchPlaceholder" />
+  </form>
+  
+  <!-- кнопка переключения размера поиска (видна только в режиме customize) -->
+  <button class="search-size-toggle widget-control-btn" id="btnSearchSizeToggle" type="button" title="Toggle compact mode" hidden>⤢</button>
+</section>
+
+
+
+
+
+    <!-- WIDGETS IN ONE CANVAS -->
+    <section class="card todo widget" id="todoCard" data-widget="todo">
+      <div class="todo-header">
+        <h2 data-i18n="widgets.todo">To do</h2>
+        <button class="todo-see-all" id="todoSeeAll" type="button" title="See all tasks">See all →</button>
+      </div>
+      <input id="todoInput" placeholder="Add task..." data-i18n="widgets.todoPlaceholder" />
+      <ul id="todoList"></ul>
+    </section>
+
+    <!-- TODO MODAL - FULL LIST VIEW -->
+    <div class="todo-modal" id="todoModal" hidden>
+      <div class="todo-modal-backdrop" id="todoModalBackdrop"></div>
+      <div class="todo-modal-window" role="dialog" aria-modal="true">
+        <div class="todo-modal-header">
+          <h2 data-i18n="widgets.todo">My Tasks</h2>
+          <button class="todo-modal-close" id="todoModalClose" type="button" title="Close">✕</button>
+        </div>
+        <ul class="todo-modal-list" id="todoModalList"></ul>
+      </div>
+    </div>
+
+    <!-- CONTACT FORM WIDGET -->
+    <section class="card contact widget" id="contactCard" data-widget="contact">
+      <div class="contact-header">
+        <h2 data-i18n="widgets.contact">Contacts</h2>
+        <button class="contact-add-btn" id="contactAddBtn" type="button" title="Add contact">＋</button>
+      </div>
+      <ul class="contact-list" id="contactList"></ul>
+    </section>
+
+    <!-- CONTACT MODAL - ADD/EDIT CONTACT -->
+    <div class="contact-modal" id="contactModal" hidden>
+      <div class="contact-modal-backdrop" id="contactModalBackdrop"></div>
+      <div class="contact-modal-window" role="dialog" aria-modal="true">
+        <div class="contact-modal-header">
+          <h2 id="contactModalTitle">Add Contact</h2>
+          <button class="contact-modal-close" id="contactModalClose" type="button" title="Close">✕</button>
+        </div>
+        
+        <form class="contact-form" id="contactForm">
+          <div class="contact-form-group">
+            <label for="contactName">Name *</label>
+            <input type="text" id="contactName" placeholder="Enter name" required />
+          </div>
+
+          <div class="contact-form-group">
+            <label for="contactPhone">Phone Number *</label>
+            <input type="tel" id="contactPhone" placeholder="Enter phone number" required />
+          </div>
+
+          <div class="contact-form-group">
+            <label for="contactEmail">Email</label>
+            <input type="email" id="contactEmail" placeholder="Enter email" />
+          </div>
+
+          <div class="contact-form-group">
+            <label>Photo</label>
+            <div class="contact-photo-upload">
+              <img id="contactPhotoPreview" class="contact-photo-img" alt="Preview" hidden />
+              <button type="button" class="contact-photo-btn" id="contactPhotoBrowse">Choose Photo</button>
+              <input type="file" id="contactPhotoInput" accept="image/*" hidden />
+            </div>
+          </div>
+        </form>
+
+        <div class="contact-modal-actions">
+          <button type="button" class="contact-btn ghost" id="contactFormCancel">Cancel</button>
+          <button type="submit" class="contact-btn primary" form="contactForm">Save</button>
+        </div>
+      </div>
+    </div>
+
+<section class="card weather widget" id="weather" data-widget="weather">
+  <div class="weather-row">
+    <div class="weather-left">
+      <div class="weather-city" id="weatherCity">—</div>
+      <div class="weather-sub" id="weatherSub" data-i18n="widgets.enableLocation">Click Enable location to show local weather.</div>
+    </div>
+
+    <div class="weather-right">
+      <div class="weather-emoji" id="weatherEmoji">🌡️</div>
+      <div class="weather-temp" id="weatherTemp">--°C</div>
+    </div>
+   
+  </div>
+
+  <div class="weather-manual">
+    <input class="weather-city-input" id="weatherCityInput" type="text" placeholder="Enter city" data-i18n="widgets.cityPlaceholder" />
+    <button class="weather-city-apply" id="weatherCityApply" type="button" data-i18n="widgets.cityApply">Set</button>
+    <button class="weather-geo" id="btnEnableWeatherGeo" type="button" title="Use my location">📍</button>
+  </div>
+</section>
+<!-- MUSIC -->
+<section class="card audio widget hidden" id="audioCard" data-widget="audio">
+  <div class="audio-header">
+    <h2 data-i18n="widgets.music">Music</h2>
+    <div class="audio-sub" id="audioStatus" data-i18n="widgets.musicHint">Using last active tab</div>
+  </div>
+
+  <div class="audio-embed" id="audioEmbed">
+    <div class="audio-empty" id="audioEmpty" data-i18n="widgets.musicEmpty">No supported tab found.</div>
+  </div>
+
+  <button class="audio-use-tab" id="audioUseTab" type="button" data-i18n="widgets.useTab">Use tab</button>
+</section>
+<!-- NOTES -->
+<section class="card notes widget" id="noteCard" data-widget="notes">
+  <div class="notes-head">
+    <div class="notes-title" data-i18n="widgets.notes">Notes</div>
+    <button class="notes-add" id="notesAdd" type="button" title="Add note">＋</button>
+  </div>
+
+  <div class="notes-list" id="notesList"></div>
+</section>
+
+<div class="notes-modal" id="notesModal" hidden>
+  <div class="notes-modal-backdrop" data-close="1"></div>
+
+  <div class="notes-modal-window" role="dialog" aria-modal="true">
+    <div class="notes-modal-top">
+      <input class="notes-modal-title" id="notesModalTitle" placeholder="Note title" data-i18n="widgets.noteTitle" />
+      <div class="notes-modal-actions">
+        <button class="notes-modal-btn" id="notesModalDelete" type="button" title="Delete" data-i18n="widgets.delete">Delete</button>
+        <button class="notes-modal-btn" id="notesModalClose" type="button" title="Close" data-i18n="widgets.close">Close</button>
+      </div>
+    </div>
+
+    <div class="notes-toolbar" id="notesToolbar" aria-label="Formatting toolbar">
+      <select class="notes-toolbar-select" id="notesFormatBlock" title="Title style">
+        <option value="p">Title</option>
+        <option value="h1">Heading 1</option>
+        <option value="h2">Heading 2</option>
+        <option value="h3">Heading 3</option>
+      </select>
+      <button class="notes-tool-btn" type="button" data-cmd="bold" title="Bold">B</button>
+      <button class="notes-tool-btn" type="button" data-cmd="italic" title="Italic">I</button>
+      <button class="notes-tool-btn" type="button" data-cmd="strikeThrough" title="Strikethrough">S</button>
+      <button class="notes-tool-btn" type="button" data-cmd="insertUnorderedList" title="Bulleted list">•</button>
+      <button class="notes-tool-btn" type="button" data-cmd="insertOrderedList" title="Numbered list">1.</button>
+      <button class="notes-tool-btn" type="button" data-cmd="checklist" title="Checklist">✓</button>
+      <button class="notes-tool-btn" type="button" data-cmd="link" title="Insert link">🔗</button>
+      <button class="notes-tool-btn" type="button" data-cmd="image" title="Insert image">🖼</button>
+      <button class="notes-tool-btn" type="button" data-cmd="table" title="Insert table">▦</button>
+      <button class="notes-tool-btn" type="button" data-cmd="blockquote" title="Quote">❝</button>
+      <button class="notes-tool-btn" type="button" data-cmd="insertHorizontalRule" title="Divider">—</button>
+    </div>
+
+    <div class="notes-modal-text" id="notesModalText" contenteditable="true" data-placeholder="Write something..." data-i18n="widgets.noteText"></div>
+    <input id="notesImageInput" type="file" accept="image/*" hidden />
+
+    <div class="notes-modal-bottom">
+      <div class="notes-modal-hint" id="notesModalHint"></div>
+      <button class="notes-modal-btn primary" id="notesModalSave" type="button" data-i18n="widgets.save">Save</button>
+    </div>
+  </div>
+</div>
+
+
+    <section class="card map widget" id="mapCard" data-widget="map" hidden>
+    
+      <div class="map-head">
+        <div>
+          <h2 class="map-title" data-i18n="widgets.map">Map</h2>
+          <div class="map-sub" id="mapStatus" data-i18n="widgets.mapStatusEnable">Tap 📍 to enable your map.</div>
+        </div>
+     
+        <button class="map-btn" id="btnEnableMapGeo" title="Use my location" data-i18n-title="widgets.useMyLocation">📍</button>
+      </div>
+
+      <div class="map-frame">
+        <iframe id="mapIframe" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+
+      <div class="map-foot">
+        <span id="mapCoords">—</span>
+        <a id="mapOpen" target="_blank" rel="noopener noreferrer" class="map-open" data-i18n="widgets.mapOpen">Open</a>
+      </div>
+    </section>
+<!-- FAVORITES (3) -->
+<section class="card fav widget" id="favCard" data-widget="favorites" data-title="Favorites">
+  <h2 data-i18n="widgets.favorites">Favorites</h2>
+  <div class="fav-slots" id="favSlots"></div>
+</section>
+
+    <section class="card date-card widget" id="dateCard" data-widget="date">
+      <div class="date-mini">
+        <div class="date-weekday" id="dateWeekday">THURSDAY</div>
+        <div class="date-day" id="dateDay">25</div>
+        <div class="date-month" id="dateMonth">DEC</div>
+      </div>
+      <div class="date-cal">
+        <div class="cal-head">
+          <button class="cal-nav" id="calPrev" type="button">◀</button>
+          <div class="cal-title" id="calTitle">January 2026</div>
+          <button class="cal-nav" id="calNext" type="button">▶</button>
+        </div>
+        <div class="cal-weekdays">
+          <div>Mo</div>
+          <div>Tu</div>
+          <div>We</div>
+          <div>Th</div>
+          <div>Fr</div>
+          <div>Sa</div>
+          <div>Su</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <button class="date-size-toggle" id="btnDateSizeToggle" type="button" title="Toggle large view" data-i18n-title="widgets.date" hidden>⤢</button>
+    </section>
+
+    <!-- ANALOG CLOCK (large, same size as date widget) -->
+    <!--
+    <section class="card date-card analog widget" id="analogClockCard" data-widget="analog">
+      <svg id="analogClockSvg" viewBox="-50 -50 100 100" preserveAspectRatio="xMidYMid meet" aria-label="Analog clock">
+        <circle r="48" class="analog-face" fill="none" />
+        <g id="analogTicks"></g>
+        <line id="hourHand" class="hand hour" x1="0" y1="0" x2="0" y2="-26" />
+        <line id="minuteHand" class="hand minute" x1="0" y1="0" x2="0" y2="-36" />
+        <line id="secondHand" class="hand second" x1="0" y1="6" x2="0" y2="-40" />
+        <circle r="2" class="analog-center" />
+      </svg>
+    </section>
+    -->
+
+    <section class="card clock widget" id="clockCard" data-widget="clock">
+      <!-- ЦИФРОВОЙ РЕЖИМ -->
+      <div class="clock-digital">
+        <div class="clock-time" id="clockTime">20:36:50</div>
+        <div class="clock-date" id="clockDate">Thursday, December 25, 2025</div>
+      </div>
+
+      <!-- АНАЛОГОВЫЙ РЕЖИМ (SVG) -->
+      <div class="clock-analog">
+        <svg id="analogClockSvg" viewBox="-50 -50 100 100" preserveAspectRatio="xMidYMid meet" aria-label="Analog clock">
+          <circle r="48" class="analog-face" fill="none" />
+          <g id="analogTicks"></g>
+          <line id="hourHand" class="hand hour" x1="0" y1="0" x2="0" y2="-28" />
+          <line id="minuteHand" class="hand minute" x1="0" y1="0" x2="0" y2="-38" />
+          <line id="secondHand" class="hand second" x1="0" y1="0" x2="0" y2="-42" />
+          <circle r="3" class="analog-center" />
+        </svg>
+      </div>
+
+      <!-- КНОПКА ПЕРЕКЛЮЧЕНИЯ (только в Customize mode) -->
+      <button class="clock-toggle" type="button" title="Toggle analog/digital">⏲</button>
+    </section>
+
+  </div>
+</main>
+
+  </div>
+
+<!-- CUSTOMIZE DRAWER (modal popup) - TWO COLUMN LAYOUT -->
+<aside class="layout-panel" id="layoutPanel" data-open="0">
+  <div class="layout-container">
+    <!-- LEFT COLUMN: MENU -->
+    <div class="layout-sidebar">
+      <div class="layout-sidebar-head">
+        <div class="layout-title" data-i18n="customize.title">Customize</div>
+      </div>
+      <div class="layout-menu" id="layoutMenu"></div>
+    </div>
+
+    <!-- RIGHT COLUMN: CONTENT -->
+    <div class="layout-content">
+      <div class="layout-content-header">
+        <select id="languageSelector" class="language-selector" title="Language">
+          <option value="en">English</option>
+          <option value="ru">Русский</option>
+          <option value="uk">Українська</option>
+          <option value="de">Deutsch</option>
+          <option value="tr">Türkçe</option>
+          <option value="az">Azərbaycan</option>
+          <option value="kk">Қазақша</option>
+          <option value="uz">O'zbekcha</option>
+          <option value="es">Español</option>
+          <option value="fr">Français</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+
+      <!-- CONTENT TABS -->
+      <div class="layout-content-body">
+        <!-- WIDGETS TAB -->
+        <div class="layout-tab" id="layoutTabWidgets" data-tab="widgets">
+          <div class="layout-list" id="layoutList"></div>
+          <div class="layout-hidden" id="layoutHidden"></div>
+        </div>
+
+        <!-- ACTIONS TAB -->
+        <div class="layout-tab" id="layoutTabActions" data-tab="actions">
+          <div class="layout-actions-group">
+            <div class="layout-action-row">
+              <div class="layout-action-desc" data-i18n="customize.actionAddPhotos">Add photos widget</div>
+              <button id="addPhotosBtn" class="layout-btn" data-i18n="customize.addPhotos">+ Photos</button>
+            </div>
+
+            <div class="layout-action-row">
+              <div class="layout-action-desc" data-i18n="customize.actionSidebarMode">Switch sidebar mode</div>
+              <button type="button" class="layout-btn" id="sidebarModeToggle" data-i18n="customize.sidebarDynamic">Sidebar: Dynamic</button>
+            </div>
+
+            <div class="layout-action-row">
+              <div class="layout-action-desc" data-i18n="customize.actionTheme">Switch light/dark theme</div>
+              <button type="button" class="layout-btn" id="layoutThemeToggle" data-i18n="customize.toggleTheme">Toggle theme</button>
+            </div>
+
+            <div class="layout-action-row">
+              <div class="layout-action-desc" data-i18n="customize.actionWeatherUnit">Toggle temperature unit</div>
+              <button type="button" class="layout-btn" id="layoutWeatherUnitToggle">°C / °F</button>
+            </div>
+
+            <div class="layout-action-row">
+              <div class="layout-action-desc" data-i18n="customize.actionClockFormat">Toggle time format</div>
+              <button type="button" class="layout-btn" id="layoutClockFormatToggle">24h / 12h</button>
+            </div>
+              <div class="layout-action-row">
+                <div class="layout-action-desc">Add Contact Form widget</div>
+                <button type="button" class="layout-btn" id="addContactFormBtn">+ Add Contact Form</button>
+              </div>
+          </div>
+        </div>
+
+        <!-- THEME TAB -->
+        <div class="layout-tab" id="layoutTabTheme" data-tab="theme">
+          <!-- Theme content will be added here -->
+        </div>
+      </div>
+
+      <div class="layout-footer">
+        <button type="button" class="layout-btn" id="layoutReset" data-i18n="customize.resetLayout">Reset layout</button>
+        <button type="button" class="layout-btn layout-btn-primary" id="layoutDoneBtn" data-i18n="customize.done">Done</button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+
+
+  <!-- BOOKMARKS (НЕ OVERLAY) -->
+  <div class="bookmarks-view" id="bookmarksView">
+    <section class="card bookmarks">
+      <button class="close-panel" id="closeBookmarks">←</button>
+      <h2 data-i18n="bookmarks.title">Bookmarks</h2>
+<div class="bm-search">
+  <input
+    id="bmSearch"
+    type="text"
+    placeholder="Search bookmarks..."
+    autocomplete="off"
+    data-i18n="bookmarks.search"
+  />
+  <button id="bmSearchClear">×</button>
+</div>
+
+
+      <form id="bookmarkForm">
+        <button type="button" id="bmPickIcon" title="Choose icon">🖼️</button>
+        <img id="bmIconPreview" alt="" style="width:22px;height:22px;border-radius:6px;display:none;" />
+
+        <input id="bmTitle" placeholder="Name" required data-i18n="bookmarks.name" />
+        <input id="bmUrl" placeholder="https://example.com" required data-i18n="bookmarks.url" />
+        <div class="select-wrap">
+          <select id="bmGroup"></select>
+          <span class="select-caret">▾</span>
+        </div>
+
+        <button type="submit">＋</button>
+      </form>
+
+      <div class="group-controls">
+        <input id="newGroupName" placeholder="Newgroupname" data-i18n="bookmarks.newGroupName" />
+        <input type="color" id="newGroupColor" value="#4f46e5" />
+        <button id="addGroupBtn" data-i18n="bookmarks.addGroup">Add group</button>
+      </div>
+
+      <ul id="bookmarkList"></ul>
+    </section>
+  </div>
+
+</div><!-- /workspace -->
+
+<div class="sidebar-hotzone"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar-pill" id="sidebarPill">
+  <button class="sb-btn" id="openBookmarks" title="Bookmarks" aria-label="Bookmarks">▦</button>
+
+  <button class="sb-btn" id="themeToggle" title="Theme" aria-label="Theme">☼</button>
+
+  <button class="sb-btn" id="changeBg" title="Background" aria-label="Background">★</button>
+
+  <button class="sb-btn" id="layoutToggle" title="Customize" aria-label="Customize">⚙</button>
+
+  <button class="sb-btn sb-donate" id="donateBtn" title="Donate" aria-label="Donate">❤</button>
+
+  <button class="sb-btn" id="donateBg" title="Tutorial" aria-label="money">?</button>
+</nav>
+
+<input type="file" id="bmIconUpload" accept="image/*,.svg" hidden />
+
+<div class="icon-modal" id="iconModal" hidden>
+  <div class="icon-modal-card">
+    <div class="icon-modal-head">
+      <div class="icon-modal-title">Choose icon</div>
+      <button type="button" class="icon-x" id="iconModalClose">×</button>
+    </div>
+
+    <div class="icon-modal-actions">
+      <button type="button" class="icon-action" id="iconUploadBtn">Upload</button>
+      <button type="button" class="icon-action" id="iconClearBtn">Auto favicon</button>
+    </div>
+
+    <div class="icon-grid" id="iconGrid"></div>
+    <div class="icon-hint">Icons loaded from /icons/icons.json</div>
+  </div>
+</div>
+<template id="photosWidgetTpl">
+  <section class="card photos widget" data-widget="photos" data-instance="">
+    <div class="card-head">
+      <div class="title">Photos</div>
+      <div class="actions">
+        <button class="icon-btn" type="button" data-act="upload" title="Add photos">＋</button>
+        <button class="icon-btn" type="button" data-act="move-up" title="Move photo up">↑</button>
+        <button class="icon-btn" type="button" data-act="move-down" title="Move photo down">↓</button>
+        <button class="icon-btn" type="button" data-act="clear" title="Clear all photos">⟳</button>
+        <button class="icon-btn" type="button" data-act="size-toggle" title="Toggle wide view">⤢</button>
+      </div>
+    </div>
+
+    <input class="photos-input" type="file" accept="image/*" multiple hidden />
+
+    <div class="photos-grid" aria-label="Photos grid"></div>
+  </section>
+</template>
+
+
+<!-- REVIEW FLOW -->
+<div class="review-modal" id="reviewModal" hidden>
+  <div class="review-backdrop"></div>
+  <div class="review-card" role="dialog" aria-modal="true">
+    <button class="review-close" id="reviewClose" type="button">✕</button>
+    <h2 class="review-title" data-i18n="review.title">Enjoying the New Tab?</h2>
+    <p class="review-subtitle" data-i18n="review.question">Do you like our extension?</p>
+    <div class="review-actions">
+      <button class="review-btn primary" id="reviewYes" type="button" data-i18n="review.yes">Yes</button>
+      <button class="review-btn" id="reviewNo" type="button" data-i18n="review.no">No</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- FIRST TIME TUTORIAL -->
+<div class="tutorial-modal" id="tutorialModal" hidden>
+  <div class="tutorial-backdrop"></div>
+  <div class="tutorial-card">
+    <button class="tutorial-close" id="tutorialClose" type="button">✕</button>
+    <h2 class="tutorial-title" data-i18n="tutorial.title">Welcome to Your New Tab!</h2>
+    <p class="tutorial-subtitle" data-i18n="tutorial.subtitle">Watch this quick tutorial to get started</p>
+    <div class="tutorial-video">
+      <iframe 
+        id="tutorialVideo"
+        width="100%" 
+        height="100%" 
+        src="https://www.youtube.com/embed/o-KzfjXjR1I"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+    <button class="tutorial-btn" id="tutorialGotIt" type="button" data-i18n="tutorial.gotIt">Got it, let's start!</button>
+    <a href="https://isma-co.github.io/FAQ/" target="_blank" class="tutorial-faq-btn">FAQ</a>
+  </div>
+</div>
+
+<!-- JS В САМОМ КОНЦЕ -->
+<script src="newtab.js"></script>
+
+</div><!-- /app -->
+
+</body>
+</html>
+
+

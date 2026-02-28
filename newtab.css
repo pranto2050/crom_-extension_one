@@ -1,0 +1,6446 @@
+/* =========================================================
+   NEWTAB.CSS — полная “чистая” версия без конфликтов
+   Layout: left widgets | center window | right widgets
+   Sidebar: hover через hotzone
+   Bookmarks: группы + OpenAll + нормальные отступы
+   Todo: крестик слева (через order), чекбокс на уровне текста
+========================================================= */
+
+/* =====================
+   RESET / BASE
+===================== */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  overflow: hidden; /* чтобы фон не скроллился */
+}
+body{
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+
+/* =====================
+   VARIABLES
+===================== */
+:root{
+  --pagew: 1280px;
+  --gap: 24px;
+  --radius: 28px;
+  --radius2: 34px;
+}
+
+/* Light/Dark variables (под твой glass стиль) */
+body.light{
+  --text: rgba(0,0,0,0.90);
+  --muted: rgba(0,0,0,0.62);
+  --card-bg: rgba(255,255,255,0.20);
+  --card-br: rgba(255,255,255,0.28);
+  --inner: rgba(0,0,0,0.10);
+--btn-bg: rgba(255,255,255,0.22);
+  --btn-br: rgba(255,255,255,0.26);
+  --shadow: 0 14px 40px rgba(0,0,0,0.22);
+}
+
+body.dark{
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.65);
+  --card-bg: rgba(255,255,255,0.10);
+  --card-br: rgba(255,255,255,0.16);
+  --inner: rgba(0,0,0,0.18);
+  --btn-bg: rgba(0,0,0,0.18);
+  --btn-br: rgba(255,255,255,0.14);
+  --shadow: 0 14px 40px rgba(0,0,0,0.30);
+}
+
+/* =====================
+   APP / BACKGROUND
+===================== */
+.app{
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Фон ты, скорее всего, ставишь через JS на body:
+   body.style.backgroundImage = ...
+*/
+body{
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+
+
+/* =====================
+   WORKSPACE PAGES
+===================== */
+.workspace{
+  width: 100%;
+  height: calc(100% - 98px); /* search сверху */
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+/* Страницы (widgets / bookmarks) */
+#widgets, #bookmarksView{
+  width: 100%;
+  height: 100%;
+}
+/* контейнер */
+#workspace{
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* По умолчанию показываем widgets */
+#bookmarksView{ display: none; }
+
+/* Если твой JS вешает класс show-bookmarks на #workspace */
+.workspace.show-bookmarks #widgets{ display: none; }
+.workspace.show-bookmarks #bookmarksView{ display: block; }
+
+/* =====================
+   CARD BASE
+===================== */
+.card{
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--card-br);
+  color: var(--text);
+
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--shadow);
+
+  backface-visibility: hidden;
+  transform: translateZ(0);
+
+  padding: 16px 18px;
+}
+
+.card h2{
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* Нормальные кнопки/инпуты в карточках */
+.card button{
+  font: inherit;
+}
+/* =====================
+   DASHBOARD CANVAS (ONE AREA)
+===================== */
+
+.dashboard{
+  width: 100%;
+  height: 100%;
+}
+
+/* =====================
+   DASHBOARD DEFAULT GRID (FINAL)
+   exactly like screenshot
+===================== */
+
+.dash-area{
+  width: min(var(--pagew), calc(100vw - 80px));
+  margin: 0 auto;
+  position: relative;
+
+  height: auto;
+  min-height: max(520px, calc(100vh - 150px));
+
+  display: grid;
+  grid-template-columns: 420px 1fr 420px;
+  grid-auto-rows: min-content;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Shift dashboard when sidebar is static */
+body.sidebar-static .dash-area{
+  width: min(var(--pagew), calc(100vw - 140px));
+  margin-left: 80px;
+  margin-right: auto;
+}
+
+
+/* LEFT COLUMN */
+#todoCard{
+  grid-column: 3;
+  grid-row: 2;
+  width: 420px;
+  height: 200px;
+  max-height: 200px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#audioCard{
+  grid-column: 3;
+  grid-row: 4;
+  width: 420px;
+  height: 400px;
+  max-height: 400px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#weather{
+  grid-column: 3;
+  grid-row: 3;
+  width: 420px;
+  height: 170px;
+  max-height: 170px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#mapCard{
+  grid-column: 2;
+  grid-row: 4;
+  width: 420px;
+  height: 320px;
+}
+
+#contactCard{
+  grid-column: 3;
+  grid-row: 5;
+  width: 420px;
+  height: 240px;
+  max-height: 240px;
+  box-sizing: border-box;
+  overflow: hidden;
+  align-self: start;
+}
+
+/* RIGHT COLUMN */
+#dateCard{
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  align-self: start;
+  width: 220px;
+  height: 220px;
+  max-height: 220px;
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#clockCard{
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+  align-self: start;
+  width: 220px;
+  height: 140px;
+  max-height: 140px;
+  position: relative;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ULTRAWIDE / 4K: scale dashboard for 2560px+ */
+@media (min-width: 2000px) {
+  :root{
+    --pagew: 1800px;
+    --gap: 32px;
+  }
+
+  .dash-area{
+    grid-template-columns: 480px 1fr 480px;
+    gap: 32px;
+  }
+
+  #todoCard,
+  #weather,
+  #contactCard,
+  #audioCard{
+    width: 480px;
+  }
+
+  #todoCard{
+    height: 220px;
+    max-height: 220px;
+  }
+
+  #weather{
+    height: 190px;
+    max-height: 190px;
+  }
+
+  #contactCard{
+    height: 260px;
+    max-height: 260px;
+  }
+
+  #audioCard{
+    height: 420px;
+    max-height: 420px;
+  }
+
+  #mapCard{
+    width: 520px;
+    height: 360px;
+  }
+
+  #dateCard{
+    width: 240px;
+    height: 240px;
+    max-height: 240px;
+  }
+
+  #clockCard{
+    width: 240px;
+    height: 160px;
+    max-height: 160px;
+  }
+}
+
+/* Аналоговый режим - увеличенный размер */
+#clockCard.is-analog{
+  width: 220px !important;
+  height: 220px !important;
+  max-height: 220px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* FREE LAYOUT MODE */
+.dash-area.free-layout{
+  display: block;
+}
+
+.dash-area.free-layout .widget{
+  position: absolute;
+  margin: 0;
+  max-width: none;
+}
+
+/* Prevent jumpy transitions while customizing */
+body.layout-editing .dash-area .widget,
+body.layout-editing #clockCard{
+  transition: none !important;
+}
+
+/* RESPONSIVE: Narrow screens - single column layout */
+@media (max-width: 1100px) {
+  .dash-area {
+    grid-template-columns: 1fr;
+    width: calc(100vw - 30px) !important;
+    margin: 0 auto !important;
+    max-width: calc(100vw - 30px) !important;
+    height: auto !important;
+    gap: 16px;
+  }
+
+  body.sidebar-static .dash-area {
+    width: calc(100vw - 30px) !important;
+    margin: 0 auto !important;
+  }
+
+
+  /* In small windows, stack widgets vertically even in free-layout */
+  .dash-area.free-layout {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+
+  .dash-area.free-layout .widget {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+  }
+
+  #searchCard,
+  #todoCard,
+  #weather,
+  #contactCard,
+  #noteCard,
+  #mapCard,
+  #favCard,
+  #dateCard,
+  #analogClockCard,
+  #clockCard {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Override specific heights for widgets */
+  #todoCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #weather {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #mapCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #noteCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #contactCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #dateCard {
+    height: auto !important;
+    max-height: none !important;
+    justify-self: auto !important;
+  }
+
+  #dateCard.date-wide {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #clockCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #clockCard.is-analog {
+    height: auto !important;
+    width: 100% !important;
+  }
+
+  #favCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  #analogClockCard {
+    height: auto !important;
+    max-height: none !important;
+  }
+}
+
+/* MOBILE: Extra small screens */
+@media (max-width: 600px) {
+  .dash-area {
+    width: 100%;
+    padding: 0 8px;
+    box-sizing: border-box;
+    gap: 12px;
+  }
+
+  #searchCard,
+  #todoCard,
+  #weather,
+  #contactCard,
+  #noteCard,
+  #mapCard,
+  #favCard,
+  #dateCard,
+  #analogClockCard,
+  #clockCard {
+    width: 100% !important;
+  }
+}
+
+
+
+
+
+
+
+/* =====================
+   DATE CARD (как на примере)
+===================== */
+.date-card{
+  width: 200px;
+  height: 165px;
+  padding: 16px 18px;
+  border-radius: 26px;
+
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.date-weekday{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.date-day{
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 1000;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.date-month{
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#dateCard.date-wide{
+  width: 220px;
+  height: 220px;
+  max-height: 220px;
+  padding: 8px;
+}
+
+.date-card.date-wide .date-day{
+  font-size: 72px;
+}
+
+.date-card.date-wide .date-month{
+  font-size: 26px;
+}
+
+.date-card.date-wide .date-weekday{
+  font-size: 13px;
+}
+
+#dateCard .date-size-toggle{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+body.layout-editing #dateCard .date-size-toggle{
+  display: flex;
+}
+
+#dateCard .date-size-toggle:hover{
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.3);
+}
+
+/* Analog clock styling (large widget matching .date-card size) */
+.analog { display: flex; align-items: center; justify-content: center; }
+.analog svg { width: 100%; height: 100%; max-width: 100%; max-height: 100%; }
+.analog .analog-face { stroke: rgba(255,255,255,0.12); stroke-width: 1.5; }
+.analog .analog-center { fill: var(--inner, rgba(0,0,0,0.08)); stroke: rgba(255,255,255,0.9); stroke-width: 0.5; }
+.analog .hand { stroke-linecap: round; transform-origin: 50% 50%; stroke: rgba(255,255,255,0.95); }
+.analog .hand.hour { stroke-width: 3.2; stroke: rgba(255,255,255,0.95); }
+.analog .hand.minute { stroke-width: 2.2; stroke: rgba(255,255,255,0.92); }
+.analog .hand.second { stroke-width: 0.9; stroke: #ff4d4f; }
+.analog .analog-tick { stroke: rgba(255,255,255,0.12); stroke-width: 1; }
+
+/* Clock analog mode styling */
+#clockCard .clock-analog{
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#clockCard.is-analog .clock-digital{
+  display: none;
+}
+
+#clockCard.is-analog .clock-analog{
+  display: flex;
+}
+
+#clockCard .clock-analog svg{
+  width: 100%;
+  height: 100%;
+  max-width: 180px;
+  max-height: 180px;
+}
+
+#clockCard .analog-face{
+  stroke: rgba(255,255,255,0.18);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+#clockCard .analog-tick{
+  stroke: rgba(255,255,255,0.12);
+  stroke-width: 1;
+}
+
+#clockCard .hand{
+  stroke-linecap: round;
+  stroke: rgba(255,255,255,0.95);
+  fill: none;
+}
+
+#clockCard .hand.hour{
+  stroke: rgba(255,255,255,0.95);
+  stroke-width: 3;
+}
+
+#clockCard .hand.minute{
+  stroke: rgba(255,255,255,0.92);
+  stroke-width: 2;
+}
+
+#clockCard .hand.second{
+  stroke: #ff4d4f;
+  stroke-width: 1;
+}
+
+#clockCard .analog-center{
+  fill: var(--text);
+  stroke: none;
+}
+
+
+/* =====================
+   CLOCK (если используешь)
+===================== */
+#clockCard.is-ampm{
+  width: 280px;
+}
+
+.clock-time{
+  width: 100%;
+  font-size: 46px;
+  font-weight: 1000;
+  line-height: 1;
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.clock-ampm{
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
+.clock-date{
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Кнопки управления часами (видны только в режиме кастомизации) */
+.clock-toggle{
+  position: absolute;
+  bottom: 15px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(0,0,0,0.35);
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: none;
+}
+
+.clock-toggle{
+  right: 10px;
+}
+
+#clockCard.is-analog .clock-toggle{
+  right: 10px;
+}
+
+/* Показывать кнопки только в режиме кастомизации */
+body.layout-editing .clock-toggle{
+  display: block;
+}
+
+/* единый стиль кнопок в режиме кастомизации (крестики/маркеры) */
+body.layout-editing .widget-control-btn,
+body.layout-editing .date-size-toggle,
+body.layout-editing .weather-size-toggle,
+body.layout-editing .clock-toggle,
+body.layout-editing .widget-size-toggle{
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--btn-br) !important;
+  background: var(--btn-bg) !important;
+  color: var(--text) !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+
+/* Clock controls styled like widget-drag-handle */
+body.layout-editing .clock-toggle{
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+  background: rgba(0,0,0,0.35) !important;
+  color: rgba(255,255,255,0.85) !important;
+  font-weight: 700 !important;
+}
+
+body.layout-editing .widget-control-btn:hover,
+body.layout-editing .date-size-toggle:hover,
+body.layout-editing .weather-size-toggle:hover,
+body.layout-editing .clock-toggle:hover,
+body.layout-editing .widget-size-toggle:hover{
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.clock-toggle:hover{
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.98);
+  transform: translateY(-1px);
+}
+
+.clock-toggle:active{
+  transform: translateY(0);
+}
+
+/* Дополнительные стили для тёмной темы */
+body.dark .clock-toggle{
+  background: rgba(0,0,0,0.35);
+  border-color: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
+}
+
+/* =====================
+   TODO (красиво + крестик слева)
+===================== */
+
+/* TODO HEADER WITH SEE ALL BUTTON */
+.todo .todo-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.todo .todo-header h2{
+  margin: 0;
+  flex: 1;
+}
+
+.todo-see-all{
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.22);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.todo-see-all:hover{
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.35);
+  transform: translateX(2px);
+}
+
+.todo-see-all:active{
+  transform: translateX(0);
+  background: rgba(255,255,255,0.20);
+}
+
+/* Hide "See all" button on screens smaller than 1440px */
+@media (max-width: 1439px) {
+  .todo-see-all{
+    display: none;
+  }
+}
+
+.todo #todoInput{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.10);
+  color: var(--text);
+  outline: none;
+}
+
+.todo #todoInput::placeholder{ color: var(--muted); }
+
+.todo #todoList{
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.todo #todoList li{
+  border-radius: 18px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.16);
+  padding: 12px 12px;
+
+  display:flex;
+  align-items:center;
+  gap: 12px;
+}
+
+.todo #todoList label{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.todo #todoList input[type="checkbox"]{
+  width: 18px;
+  height: 18px;
+  accent-color: rgba(255,255,255,0.85);
+}
+
+.todo #todoList span{
+  font-weight: 800;
+  overflow:hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.todo #todoList li.done span{
+  opacity: .55;
+  text-decoration: line-through;
+}
+
+/* крестик слева — без правок JS (через order:-1) */
+.todo .todo-del{
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+
+  order: -1;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.todo .todo-del:hover{ filter: brightness(1.08); }
+
+/* =====================
+   TODO MODAL - FULL LIST VIEW
+===================== */
+.todo-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.todo-modal[hidden]{ display: none; }
+
+.todo-modal-backdrop{
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.todo-modal-window{
+  position: relative;
+  z-index: 2001;
+  width: min(620px, 92vw);
+  max-height: min(90vh, 760px);
+  margin: auto;
+  align-self: center;
+  border-radius: var(--radius2);
+  border: 1px solid var(--card-br);
+  background: var(--card-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp{
+  from{
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to{
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.todo-modal-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--card-br);
+  flex-shrink: 0;
+}
+
+.todo-modal-header h2{
+  margin: 0;
+  flex: 1;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.todo-modal-close{
+  width: 40px;
+  height: 40px;
+  border-radius: 16px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.todo-modal-close:hover{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+  filter: brightness(1.08);
+}
+
+.todo-modal-list{
+  list-style: none;
+  padding: 12px;
+  margin: 0;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.todo-modal-list li{
+  border-radius: 18px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.todo-modal-list li:hover{
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.22);
+}
+
+.todo-modal-list label{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.todo-modal-list input[type="checkbox"]{
+  width: 20px;
+  height: 20px;
+  accent-color: rgba(255,255,255,0.85);
+  cursor: pointer;
+}
+
+.todo-modal-list span{
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.todo-modal-list li.done span{
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.todo-modal-list .todo-del{
+  width: 36px;
+  height: 36px;
+  border-radius: 14px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex: 0 0 auto;
+  transition: all 0.2s ease;
+}
+
+.todo-modal-list .todo-del:hover{
+  filter: brightness(1.08);
+  border-color: rgba(255,255,255,0.28);
+}
+
+/* SCROLLBAR FOR MODAL LIST */
+.todo-modal-list::-webkit-scrollbar{ width: 8px; }
+.todo-modal-list::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.22);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.todo-modal-list::-webkit-scrollbar-track{ background: transparent; }
+
+/* =====================
+   CONTACT WIDGET & MODAL
+===================== */
+
+/* CONTACT WIDGET CARD */
+.card.contact{
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.contact-header h2{
+  margin: 0;
+  flex: 1;
+}
+
+.contact-add-btn{
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.contact-add-btn:hover{
+  filter: brightness(1.08);
+}
+
+.contact-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.contact-item{
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.contact-item:hover{
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.18);
+}
+
+.contact-item-photo{
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(255,255,255,0.1);
+}
+
+.contact-item-info{
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-item-name{
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-item-phone{
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-item-delete{
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.contact-item-delete:hover{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+}
+
+/* CONTACT MODAL */
+.contact-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.contact-modal[hidden]{ display: none; }
+
+.contact-modal-backdrop{
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+}
+
+.contact-modal-window{
+  position: relative;
+  z-index: 2001;
+  width: min(620px, 92vw);
+  max-height: min(90vh, 760px);
+  margin: auto;
+  align-self: center;
+  border-radius: var(--radius2);
+  border: 1px solid var(--card-br);
+  background: var(--card-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.contact-modal-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--card-br);
+  flex-shrink: 0;
+}
+
+.contact-modal-header h2{
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.contact-modal-close{
+  width: 40px;
+  height: 40px;
+  border-radius: 16px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.contact-modal-close:hover{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+  filter: brightness(1.08);
+}
+
+.contact-form{
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.contact-form-group{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.contact-form-group label{
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.contact-form-group input{
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.1);
+  color: var(--text);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.contact-form-group input:focus{
+  border-color: rgba(255,255,255,0.28);
+  background: rgba(0,0,0,0.15);
+}
+
+.contact-form-group input::placeholder{
+  color: var(--muted);
+}
+
+.contact-photo-upload{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.contact-photo-img{
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.contact-photo-btn{
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.contact-photo-btn:hover{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+}
+
+.contact-modal-actions{
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--card-br);
+  flex-shrink: 0;
+  background: var(--card-bg);
+}
+
+.contact-btn{
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.contact-btn:hover{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+}
+
+.contact-btn.primary{
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.28);
+}
+
+.contact-btn.primary:hover{
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.35);
+}
+
+.contact-btn.ghost{
+  background: transparent;
+  border-color: rgba(255,255,255,0.18);
+}
+
+.contact-btn.ghost:hover{
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* =====================
+   WEATHER
+===================== */
+.weather{
+  min-height: 86px;
+  display:flex;
+  align-items:center;
+  justify-content: flex-start;
+  color: var(--text);
+}
+
+.weather .muted{ color: var(--muted); }
+
+/* =====================
+   MAP
+===================== */
+.card.map{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.map-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.map-title{
+  margin:0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.map-sub{
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.map-btn{
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+}
+.map-btn:hover{ filter: brightness(1.08); }
+
+.map-frame{
+  width: 100%;
+  height: 140px;
+  border-radius: 18px;
+  overflow:hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.10);
+}
+
+#mapIframe{ width: 100%; height: 100%; border: 0; }
+
+.map-foot{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.map-open{
+  text-decoration:none;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.12);
+}
+.map-open:hover{ filter: brightness(1.08); }
+
+/* =====================
+   AUDIO CARD
+===================== */
+#audioCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.audio-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.audio-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.audio-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 0;
+}
+
+.audio-embed {
+  flex: 1 1 auto;
+  min-height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.audio-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.audio-empty {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  padding: 20px;
+}
+
+.audio-volume {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.audio-volume-label {
+  font-size: 14px;
+  flex: 0 0 auto;
+  width: 16px;
+}
+
+.audio-volume-slider {
+  flex: 1 1 auto;
+  height: 6px;
+  cursor: pointer;
+  border-radius: 4px;
+  accent-color: rgba(76, 175, 80, 0.9);
+}
+
+.audio-use-tab {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+  transition: all 0.2s;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.audio-use-tab:hover {
+  filter: brightness(1.08);
+}
+
+.audio.is-unsupported .audio-volume-slider {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* красивые range (не везде идеально, но норм) */
+input[type="range"]{
+  accent-color: rgba(255,255,255,0.75);
+}
+
+/* =====================
+   BOOKMARKS VIEW (страница)
+===================== */
+
+
+.bookmarks-view > .card.bookmarks{
+  width: min(var(--pagew), calc(100vw - 80px));
+  margin: 0 auto;
+  margin-top: 10px;
+
+  height: calc(100% - 20px);
+  overflow-y: auto;
+  padding-bottom: 40px;
+}
+
+/* Close button on bookmarks panel */
+.close-panel{
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+}
+.close-panel:hover{ filter: brightness(1.08); }
+
+/* Form controls */
+.bookmarks form{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.bookmarks input,
+.bookmarks select{
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.14);
+  color: var(--text);
+  outline: none;
+}
+
+.bookmarks input::placeholder{ color: var(--muted); }
+
+/* Bookmarks: buttons (instead of black) */
+.bookmarks button{
+  font: inherit;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.12);
+
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .15s ease, filter .15s ease, background .15s ease;
+}
+
+.bookmarks button:hover{ transform: translateY(-1px); filter: brightness(1.08); }
+.bookmarks button:active{ transform: translateY(0); filter: brightness(0.98); }
+.bookmarks button:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.10), 0 10px 26px rgba(0,0,0,0.12);
+}
+
+
+.group-controls{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items:center;
+  margin: 10px 0 14px 0;
+}
+
+/* Bookmarks: search row (full width inside the card) */
+.bm-search{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 12px 0;
+  width: 100%;
+}
+.bm-search input{
+  flex: 1 1 auto;
+  min-width: 0; /* allow flex truncation */
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.14);
+  color: var(--text);
+  outline: none;
+}
+.bm-search button{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+
+
+/* Группы */
+.bookmark-group{ margin-bottom: 18px; }
+
+.bookmark-group-title{
+  font-size: 14px;
+  font-weight: 900;
+  opacity: 0.85;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px 0;
+}
+
+.bm-actions{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+/* Bookmarks: icon action buttons */
+.bm-openall, .del-group, .bm-del, .icon-x{
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+
+  transition: transform .15s ease, filter .15s ease;
+}
+
+.bm-openall:hover, .del-group:hover, .bm-del:hover, .icon-x:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+
+/* Список закладок внутри группы */
+.bm-items{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+/* Одна закладка */
+.bm-items li{
+  height: 78px;
+  padding: 12px 14px;
+  border-radius: 18px;
+
+  background: rgba(255,255,255,0.14);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.bm-items li:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.16);
+}
+
+.bm-left{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  overflow:hidden;
+}
+
+.bm-icon{
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  object-fit: contain;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.bm-items a{
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+  overflow:hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.bm-del{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.9);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+}
+.bm-del:hover{ filter: brightness(1.08); }
+
+/* =====================
+   BOOKMARKS SCROLL SHADOW
+===================== */
+.card.bookmarks{
+  position: relative;
+}
+
+.card.bookmarks::before,
+.card.bookmarks::after{
+  content: "";
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 24px;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.card.bookmarks::before{
+  top: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.22), rgba(0,0,0,0));
+}
+
+.card.bookmarks::after{
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.22), rgba(0,0,0,0));
+}
+
+.card.bookmarks.shadow-top::before{ opacity: 1; }
+.card.bookmarks.shadow-bottom::after{ opacity: 1; }
+
+/* Scrollbar */
+.card.bookmarks::-webkit-scrollbar{ width: 6px; }
+.card.bookmarks::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.40);
+  border-radius: 6px;
+}
+.card.bookmarks::-webkit-scrollbar-track{ background: transparent; }
+
+/* =====================
+   ICON PICKER MODAL (если используешь)
+===================== */
+.icon-modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+
+.icon-modal[hidden]{ display:none; }
+
+.icon-modal-card{
+  width: min(760px, calc(100vw - 40px));
+  max-height: min(620px, calc(100vh - 60px));
+  overflow: auto;
+
+  border-radius: 22px;
+  padding: 14px;
+  background: rgba(25,25,35,0.70);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+}
+
+.icon-modal-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.icon-modal-title{
+  font-weight: 900;
+  color: rgba(255,255,255,0.92);
+}
+
+.icon-x{
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+
+.icon-modal-actions{
+  display:flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.icon-action{
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+
+.icon-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+  gap: 10px;
+}
+
+.icon-tile{
+  height: 54px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.08);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+}
+
+.icon-tile:hover{ filter: brightness(1.1); }
+
+.icon-tile img{
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.icon-hint{
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: .75;
+  color: rgba(255,255,255,0.9);
+}
+
+/* =====================
+   SIDEBAR (hover appear via hotzone)
+===================== */
+.sidebar-hotzone{
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 100vh;
+  z-index: 1000;
+}
+
+/* “pill” стиль как на твоей фотке */
+.sidebar-pill{
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translate(-90px, -50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .25s ease, opacity .25s ease;
+  z-index: 1001;
+
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 10px;
+
+  border-radius: 28px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.16);
+
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.20);
+}
+
+/* Появление */
+.sidebar-hotzone:hover + .sidebar-pill,
+.sidebar-pill:hover{
+  transform: translate(0, -50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Static sidebar mode (always visible) */
+body.sidebar-static .sidebar-pill{
+  transform: translate(0, -50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.sidebar-static .sidebar-hotzone{
+  pointer-events: none;
+}
+
+/* Кнопки */
+.sidebar-pill .sb-btn{
+  width: 44px;
+  height: 44px;
+  border-radius: 18px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+}
+.sb-divider{
+  width: 100%;
+  height: 1px;
+  border-radius: 1px;
+  background: rgba(255,255,255,0.18);
+  opacity: 0.6;
+  margin: 2px 0;
+}
+
+.sidebar-pill .sb-btn:hover{ filter: brightness(1.08); }
+
+/* =====================
+   SMALL HELPERS
+===================== */
+.hidden{ display:none !important; }
+
+
+/* ===== Background picker popover ===== */
+.bg-popover{
+  position: fixed;
+  z-index: 3500;
+  width: 320px;
+  padding: 10px;
+  border-radius: 18px;
+
+  background: rgba(25,25,35,0.72);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  color: rgba(255,255,255,0.92);
+}
+
+.bgp-btn{
+  width: 100%;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.18);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.bgp-btn:hover{ filter: brightness(1.08); }
+
+.bgp-ghost{
+  background: rgba(255,255,255,0.08);
+  margin-bottom: 0;
+}
+
+.bgp-row{
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bgp-input{
+  flex: 1;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.92);
+  outline: none;
+}
+
+.bgp-input::placeholder{ color: rgba(255,255,255,0.65); }
+
+
+/* ===== Group select (styled) ===== */
+.select-wrap{
+  position: relative;
+  min-width: 170px;
+  flex: 0 0 auto;
+}
+
+.select-wrap select{
+  width: 100%;
+  height: 44px;
+  padding: 0 44px 0 14px; /* справа место под caret */
+  border-radius: 14px;
+
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: var(--text);
+
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.select-wrap select:hover{
+  border-color: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.14);
+}
+
+.select-wrap select:focus{
+  border-color: rgba(255,255,255,0.36);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.10);
+}
+
+.select-caret{
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(0,0,0,0.16);
+  border: 1px solid rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.85);
+
+  pointer-events: none;
+  font-weight: 900;
+}
+
+/* dropdown options (частично зависит от браузера, но улучшает) */
+.select-wrap select option{
+  background: #1b1b22;
+  color: #fff;
+}
+/* Hide center widget (HOME / Your Space) */
+#centerWidget,
+.center-widget,
+.home-card,
+.card.home {
+  display: none !important;
+}
+.card.home { display:none !important; }
+
+/* когда открыты закладки */
+#workspace.show-bookmarks .bookmarks-view{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* прячем дашборд (без изменения его позиции “в мире”, просто визуально) */
+#workspace.show-bookmarks .dashboard-view{
+  opacity: 0;
+  transform: translateY(-10px);
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* на всякий: уважаем reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .dashboard-view, .bookmarks-view{ transition: none !important; }
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Чтобы скроллился workspace, а не вся страница */
+body {
+  overflow: hidden;
+}
+
+/* iOS-like scroll на твоём workspace */
+#workspace.ios-scroll {
+  height: 100vh;      /* можно 100dvh */
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+
+  /* критично, если внутри flex/grid */
+  min-height: 0;
+}
+
+/* тонкий скроллбар (Chrome/Edge) */
+#workspace.ios-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+#workspace.ios-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.22);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+#workspace.ios-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+#workspace.ios-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+
+
+
+
+
+
+/* ===========================
+   2-й скролл: DASHBOARD
+   (внутри .widgets)
+=========================== */
+
+/* контейнер-страница */
+.widgets {
+  height: 100vh;
+  overflow: hidden;    /* чтобы скролл был внутри dashboard */
+  min-height: 0;
+}
+
+/* сам скролл */
+.widgets .dashboard {
+  height: 100%;
+  overflow-y: auto;    /* если хочешь ВСЕГДА видимый — поставь scroll */
+  overflow-x: hidden;
+
+  -webkit-overflow-scrolling: touch; /* iOS momentum */
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+
+  min-height: 0;       /* важно для flex/grid */
+}
+
+/* ===========================
+   3-й скролл: BOOKMARKS panel
+=========================== */
+.bookmarks-view {
+  height: 100vh;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.bookmarks-view .card.bookmarks {
+  height: 100%;
+  overflow-y: auto;    /* или scroll */
+  overflow-x: hidden;
+
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+
+  min-height: 0;
+}
+
+/* ===========================
+   Стиль "iOS-like" скроллбаров
+=========================== */
+.widgets .dashboard::-webkit-scrollbar,
+.bookmarks-view .card.bookmarks::-webkit-scrollbar {
+  width: 10px;
+}
+
+.widgets .dashboard::-webkit-scrollbar-thumb,
+.bookmarks-view .card.bookmarks::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.22);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.widgets .dashboard::-webkit-scrollbar-track,
+.bookmarks-view .card.bookmarks::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox */
+.widgets .dashboard,
+.bookmarks-view .card.bookmarks {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+
+
+/* Любые декоративные оверлеи/blur не должны ловить клики */
+.workspace::before, .workspace::after,
+.widgets::before, .widgets::after,
+.bookmarks-view::before, .bookmarks-view::after,
+.card::before, .card::after {
+  pointer-events: none !important;
+}
+
+/* Контент всегда поверх псевдо-слоёв */
+.workspace, .widgets, .bookmarks-view, .card { position: relative; }
+.card > * { position: relative; z-index: 2; }
+
+
+/* FIX heights (убираем 100vh внутри workspace) */
+#workspace.ios-scroll{ height: 100% !important; }
+
+.widgets, .bookmarks-view{ height: 100% !important; }
+
+
+
+
+/* HELP full-screen overlay */
+#helpView{
+  position: fixed;     /* важно: поверх всего */
+  inset: 0;
+  transform: translateX(100%);
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  pointer-events: none;
+  z-index: 99999;
+}
+
+/* карточка теперь занимает весь экран */
+#helpView .help-card{
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;    /* full-screen */
+}
+
+/* когда открыто */
+#workspace.help-open #helpView{
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* виджеты уезжают влево (оставляем как было) */
+#widgets{
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+}
+
+#workspace.help-open #widgets{
+  transform: translateX(-110%);
+}
+
+/* HELP full-screen look */
+.help-card{
+  padding: 28px;
+  box-sizing: border-box;
+}
+
+.help-back{
+  position: absolute;
+  top: 18px;
+  left: 18px;
+}
+
+.help-wrap{
+  max-width: 980px;
+  margin: 40px auto 0;
+}
+
+.help-title{
+  font-size: 42px;
+  margin: 0 0 6px;
+  letter-spacing: .2px;
+}
+
+.help-sub{
+  margin: 0 0 22px;
+  opacity: .9;
+  line-height: 1.5;
+}
+
+.help-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.help-block{
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 18px;
+  padding: 14px 16px;
+  backdrop-filter: blur(10px);
+}
+
+.help-block h3{
+  margin: 0 0 6px;
+  font-size: 16px;
+  letter-spacing: .2px;
+}
+
+.help-block p{
+  margin: 0;
+  opacity: .9;
+  line-height: 1.5;
+}
+
+.help-block p + p{ margin-top: 8px; }
+
+.help-note{
+  opacity: .85;
+}
+
+.help-actions{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.help-btn{
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 70px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  transition: transform .15s ease, filter .15s ease, background .15s ease;
+}
+
+.help-btn:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+}
+
+.help-btn:active{
+  transform: translateY(0px);
+  filter: brightness(0.98);
+}
+
+.help-btn-ico{
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-size: 20px;
+}
+
+.help-btn--primary{
+  background: rgba(175, 175, 186, 0.35);
+  border-color: rgba(227, 229, 230, 0.5);
+}
+
+.help-btn--ghost{
+  background: rgba(255,255,255,0.08);
+}
+
+@media (max-width: 900px){
+  .help-grid{ grid-template-columns: 1fr; }
+  .help-actions{ grid-template-columns: 1fr; }
+  .help-title{ font-size: 34px; }
+}
+
+
+/* Help buttons text color fix (make white) */
+.help-actions a.help-btn,
+.help-actions a.help-btn:visited{
+  color: rgba(255,255,255,0.92);
+}
+
+.help-actions a.help-btn b{
+  color: rgba(255,255,255,0.98);
+}
+
+.help-actions a.help-btn span{
+  color: inherit;
+}
+
+.help-actions a.help-btn:hover{
+  color: rgba(255,255,255,1);
+}
+.help-actions .help-btn *{
+  color: inherit !important;
+}
+
+/* =========================================================
+   Smooth slide ONLY (no fade, no extra transparency)
+   Dashboard (widgets) -> goes RIGHT
+   Bookmarks -> comes from LEFT
+========================================================= */
+
+/* держим обе страницы в DOM для анимации (display:none убивает slide) */
+#widgets,
+#bookmarksView{
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+
+  /* только transform — без opacity/filter */
+  transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+}
+
+/* по умолчанию: дашборд на месте */
+#widgets{
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* bookmarks спрятан слева */
+#bookmarksView{
+  transform: translateX(-105%);
+  pointer-events: none;
+}
+
+/* открыть bookmarks: виджеты улетают вправо, bookmarks въезжает слева */
+#workspace.show-bookmarks #widgets{
+  transform: translateX(105%);
+  pointer-events: none;
+}
+
+#workspace.show-bookmarks #bookmarksView{
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+/* чтобы help не конфликтовал */
+#workspace.help-open #bookmarksView{
+  pointer-events: none;
+}
+
+
+
+.widget[data-size="small"]  { width: 220px; height: 120px; }
+
+/* =========================
+   Customize panel (TWO-COLUMN LAYOUT)
+========================= */
+
+#layoutPanel{
+  position: fixed;
+  bottom: 90px;
+  right: 30px;
+  width: 650px !important;
+  max-width: calc(100vw - 60px) !important;
+  max-height: 75vh !important;
+  background: var(--card-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--card-br);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  z-index: 4000;
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+  transform: scale(0.9) translateY(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease-out;
+}
+
+#layoutPanel[data-open="1"] {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+  width: 650px !important;
+  max-width: calc(100vw - 60px) !important;
+  max-height: 75vh !important;
+}
+
+#layoutPanel[hidden] { display: flex; }
+
+.layout-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* LEFT SIDEBAR */
+.layout-sidebar {
+  width: 190px;
+  border-right: 1px solid var(--card-br);
+  background: rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  overflow-y: auto;
+}
+
+.layout-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-br);
+}
+
+.layout-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-br);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.layout-close:hover {
+  filter: brightness(1.08);
+  transform: scale(1.05);
+}
+
+.layout-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.layout-menu-item {
+  padding: 12px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  text-align: left;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.layout-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.layout-menu-item.active {
+  background: var(--btn-bg);
+  color: var(--text);
+  border: 1px solid var(--btn-br);
+}
+
+.layout-menu-icon {
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+/* RIGHT CONTENT AREA */
+.layout-content {
+  flex: 0 0 455px;
+  width: 455px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  overflow: hidden;
+}
+
+.layout-content-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.layout-content-body {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.layout-tab {
+  display: none;
+}
+
+.layout-tab.active {
+  display: block;
+}
+
+.layout-footer {
+  display: flex;
+  gap: 8px;
+}
+
+.layout-actions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.layout-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--inner);
+  border: 1px solid var(--card-br);
+}
+
+.layout-action-desc {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.layout-action-row .layout-btn {
+  min-width: 108px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.layout-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.language-selector {
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.language-selector:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.language-selector:focus {
+  box-shadow: 0 0 0 2px var(--btn-br);
+}
+
+.language-selector option {
+  background: var(--card-bg);
+  color: var(--text);
+  padding: 8px;
+}
+
+.layout-title{
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--text);
+  margin: 0;
+}
+
+.layout-sub{
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.layout-done,
+.layout-close,
+.layout-btn{
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.layout-done,
+.layout-close {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.layout-done:hover,
+.layout-close:hover,
+.layout-btn:hover{ 
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.layout-list{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.layout-item{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--inner);
+  border: 1px solid var(--card-br);
+  cursor: grab;
+  transition: all .2s ease;
+  user-select: none;
+}
+
+.layout-item:active{
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+.layout-item:hover{
+  background: var(--btn-bg);
+  border-color: var(--btn-br);
+  transform: translateY(-2px);
+}
+
+.layout-item-name{
+  flex: 1;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.layout-item-del{
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  flex: 0 0 auto;
+  transition: all .15s ease;
+}
+
+.layout-item-toggle{
+  position: relative;
+  width: 46px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.layout-item-toggle input{
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.layout-toggle-slider{
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--inner);
+  border: 1px solid var(--card-br);
+  transition: all .2s ease;
+}
+
+.layout-toggle-slider::before{
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-br);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+  transition: all .2s ease;
+}
+
+.layout-item-toggle input:checked + .layout-toggle-slider{
+  background: rgba(128, 128, 128, 0.25);
+  border-color: rgba(128, 128, 128, 0.45);
+}
+
+.layout-item-toggle input:checked + .layout-toggle-slider::before{
+  transform: translate(18px, -50%);
+  background: rgba(128, 128, 128, 0.7);
+  border-color: rgba(128, 128, 128, 0.6);
+}
+
+.layout-item-toggle input:focus-visible + .layout-toggle-slider{
+  box-shadow: 0 0 0 3px rgba(128, 128, 128, 0.25);
+}
+
+.layout-item-del:hover{
+  filter: brightness(1.12);
+  transform: scale(1.08);
+}
+
+.layout-actions{
+  margin-top: 16px;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.layout-btn {
+  flex: 1;
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 12px !important;
+  padding: 10px 14px !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.layout-btn:hover {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+.layout-btn-primary {
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.9) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.layout-btn-primary:hover {
+  background: rgba(255,255,255,0.12) !important;
+  border-color: rgba(255,255,255,0.2) !important;
+}
+
+/* =========================
+   FIX: TODO в free-layout
+   (чтобы задачи не вылезали за карточку)
+========================= */
+
+#todoCard{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;           /* важно: не даём контенту “вылезать” */
+  min-height: 200px;          /* по желанию */
+}
+
+/* инпут всегда сверху */
+#todoCard #todoInput{
+  flex: 0 0 auto;
+}
+
+/* список занимает остаток высоты и скроллится */
+#todoCard #todoList{
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;              /* важно для flex+scroll */
+  margin: 0;
+  padding: 0;
+  padding-right: 6px;         /* место под скроллбар */
+}
+
+/* элементы списка не должны растягиваться за ширину */
+#todoCard #todoList li{
+  width: 100%;
+}
+
+/* твой JS создаёт .todo-main и .todo-text — оформим нормально */
+#todoCard .todo-main{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+#todoCard .todo-text{
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* тонкий скроллбар (не обязательно) */
+#todoCard #todoList::-webkit-scrollbar{ width: 8px; }
+#todoCard #todoList::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.22);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+#todoCard #todoList::-webkit-scrollbar-track{ background: transparent; }
+
+
+
+/* =========================
+   HELP: extra UI polish
+========================= */
+
+.help-block--wide{
+  grid-column: 1 / -1;
+}
+
+.help-list{
+  margin: 10px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.help-shortcuts{
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  opacity: .92;
+  line-height: 1.5;
+}
+
+kbd{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 10px;
+
+  background: rgba(0,0,0,0.20);
+  border: 1px solid rgba(255,255,255,0.16);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .02em;
+  color: rgba(255,255,255,0.92);
+}
+
+.help-ico{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 28px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-weight: 900;
+}
+
+.help-x{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-weight: 1000;
+}
+
+.help-dot{
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.16);
+  vertical-align: middle;
+}
+
+
+
+
+/* Help: scroll inside the full-screen card */
+#helpView .help-card{
+  overflow: auto;                 /* ВОТ ЭТО ДАЁТ СКРОЛЛ */
+  overscroll-behavior: contain;   /* чтобы не прокручивался фон */
+}
+
+/* стильный скролл ТОЛЬКО для help */
+#helpView .help-card::-webkit-scrollbar{
+  width: 10px;
+}
+
+#helpView .help-card::-webkit-scrollbar-track{
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+#helpView .help-card::-webkit-scrollbar-thumb{
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.30),
+    rgba(255,255,255,0.12)
+  );
+  border-radius: 999px;
+  border: 2px solid rgba(0,0,0,0.12);
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.20),
+    inset 0 0 0 1px rgba(255,255,255,0.14);
+}
+
+#helpView .help-card::-webkit-scrollbar-thumb:hover{
+  background: linear-gradient(
+    180deg,
+    rgba(255,255,255,0.46),
+    rgba(255,255,255,0.18)
+  );
+}
+
+/* Firefox (только help) */
+#helpView .help-card{
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.35) rgba(255,255,255,0.08);
+}
+
+
+/* =========================
+   Favorites (3) widget
+========================= */
+.card.fav{
+  padding: 12px;
+}
+
+.fav-slots{
+  display: grid;
+  grid-template-columns: repeat(3, 43px);
+  gap: 20px;
+  padding: 10px;
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+}
+
+.fav-slot{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  min-height: 0;
+  aspect-ratio: 1;
+}
+
+.fav-slot:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+.fav-slot:active{
+  transform: scale(0.95);
+}
+
+.fav-num{
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-weight: 300;
+  font-size: 32px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.fav-ico{
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.fav-meta{
+  display: none;
+}
+
+.fav-title{
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fav-url{
+  font-size: 12px;
+  opacity: .82;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fav-clear,
+.fav-add{
+  position: absolute;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  z-index: 10;
+  padding: 0;
+}
+
+.fav-clear{
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.4);
+  font-size: 12px;
+  top: 3px;
+  right: 3px;
+  display: none;
+}
+
+body.layout-editing .fav-clear{
+  display: flex;
+}
+
+.fav-add{
+  width: 43px;
+  height: 43px;
+  font-size: 20px;
+  transition: all 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fav-slot.fav-empty:hover .fav-add{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fav-clear:hover,
+.fav-add:hover{
+  background: rgba(255,255,255,0.16);
+}
+
+/* =========================
+   Bookmark star button
+========================= */
+.bm-fav{
+  width: 30px;
+  height: 30px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+.bm-fav:hover{ background: rgba(255,255,255,0.16); }
+.bm-fav.is-on{ background: rgba(255,255,255,0.18); }
+
+/* =========================
+   Favorites picker popover
+========================= */
+#favPicker{
+  position: fixed;
+  z-index: 100000;
+}
+#favPicker[hidden]{ display: none; }
+
+.fav-picker-card{
+  width: 300px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+}
+
+.fav-picker-title{
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.fav-picker-slots{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fav-pick-slot{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  cursor: pointer;
+  text-align: left;
+  color: rgba(255,255,255,0.92);
+}
+
+.fav-pick-slot:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+.fav-pick-num{
+  width: 26px;
+  height: 26px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  font-weight: 900;
+}
+
+.fav-pick-name{
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: .9;
+}
+
+.fav-picker-cancel{
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.06);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+
+.fav-picker-cancel:hover{
+  background: rgba(255,255,255,0.10);
+}
+/* Bookmarks: keep content above Windows taskbar */
+#bookmarksView{
+  padding-bottom: 22px;              /* подними всё чуть выше */
+  box-sizing: border-box;
+}
+
+/* если у тебя есть внутренний скролл-контейнер, добавим запас и ему */
+#bookmarksView .bm-body,
+#bookmarksView .bm-groups,
+#bookmarksView .bm-list{
+  padding-bottom: 22px;
+  box-sizing: border-box;
+}
+
+
+/* =========================
+   SAFE BOTTOM (dashboard + bookmarks)
+   чтобы низ не обрезался
+========================= */
+/* ===== FIX: dashboard реально до низа экрана ===== */
+
+/* убираем искусственный зазор */
+:root{
+  --ui-safe-bottom: 0px !important;
+  --dash-safe-bottom: 5px !important; /* у тебя было 70px и оно тоже делает “воздух” снизу */
+}
+
+/* страницы должны занимать весь контейнер */
+#widgets,
+#bookmarksView{
+  top: 0 !important;
+  bottom: 0 !important;
+  height: 100% !important;
+}
+
+/* workspace должен реально иметь высоту */
+.workspace{ height: auto !important; }
+#workspace{ height: 100% !important; }
+
+/* dashboard тянется вниз */
+.widgets{
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.widgets .dashboard{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* не используем 100vh внутри вложенного контейнера */
+.dash-area{
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+
+
+/* =========================
+   Color picker like "Add group" button
+========================= */
+
+#bookmarksView input[type="color"]{
+  -webkit-appearance: none;
+  appearance: none;
+
+  height: 40px;
+  width: 50px;                  /* можно 52-60 подогнать */
+  padding: 0;
+
+   border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: var(--text);
+
+ 
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.06),
+    0 10px 22px rgba(0,0,0,0.18);
+
+  cursor: pointer;
+  transition: transform .12s ease, background .15s ease, filter .15s ease;
+}
+
+#bookmarksView input[type="color"]:hover{
+  background: rgba(255,255,255,0.14);
+  filter: brightness(1.06);
+}
+
+#bookmarksView input[type="color"]:active{
+  transform: translateY(1px);
+  filter: brightness(0.98);
+}
+
+#bookmarksView input[type="color"]:focus{
+  outline: none;
+  box-shadow:
+    0 0 0 4px rgba(255,255,255,0.10),
+    inset 0 0 0 1px rgba(255,255,255,0.10),
+    0 10px 22px rgba(0,0,0,0.18);
+}
+
+/* Внутренний цвет — аккуратный кружок/плашка */
+#bookmarksView input[type="color"]::-webkit-color-swatch-wrapper{
+  padding: 7px;
+  border-radius: 14px;
+}
+
+#bookmarksView input[type="color"]::-webkit-color-swatch{
+  border: none;
+  border-radius: 10px; /* можно 999px если хочешь кружок */
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.20),
+    0 10px 18px rgba(0,0,0,0.18);
+}
+
+/* Firefox */
+#bookmarksView input[type="color"]::-moz-color-swatch{
+  border: none;
+  border-radius: 10px;
+}
+
+
+.bookmark-group.bm-drop{
+  outline: 2px dashed rgba(255,255,255,0.35);
+  outline-offset: 8px;
+  border-radius: 18px;
+}
+
+.bm-item.bm-dragging{
+  opacity: .65;
+  transform: scale(.99);
+}
+/* если первая кнопка действия — это ★ */
+.bm-item > .bm-fav,
+.bm-item > .bm-star,
+.bm-item > .bm-save{
+  margin-left: auto; /* толкает ★ и × вправо вместе */
+}
+
+.bm-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.bm-left{ flex:1; min-width:0; }
+/* Center icons inside bookmark action buttons (★ / ×) */
+.bm-item .bm-right button,
+.bm-item button.bm-fav,
+.bm-item button.bm-del{
+  display: grid;
+  place-items: center;
+
+  width: 34px;      /* подгони под твой размер */
+  height: 34px;
+
+  padding: 0 !important;
+  line-height: 1 !important;   /* важно */
+  font-size: 16px;             /* для ★ */
+}
+
+/* крестик обычно выглядит лучше чуть больше */
+.bm-item button.bm-del{
+  font-size: 18px;
+}
+
+
+/* Preset size button for widgets (To do: 2×2 / 4×4) */
+.widget-size{
+  position: absolute;
+  top: 12px;
+  right: 56px; /* если наезжает на другие кнопки — подгони */
+  height: 34px;
+  min-width: 44px;
+  padding: 0 10px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .2px;
+
+  color: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.16);
+
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+body:not(.layout-editing) .widget-size{
+  display: none;
+}
+
+/* На всякий случай прячем старый resize-хэндл, если он где-то остался */
+.widget-resize{
+  display: none !important;
+}
+body:not(.layout-editing) .widget-size{ display:none; }
+/* Hide top search bar */
+
+/* =========================================================
+   FIX: widgets are clipped at top/bottom (safe padding)
+   Paste this at the END of newtab.css
+========================================================= */
+
+:root{
+  --dash-safe-top: 22px;     /* отступ сверху (чтобы не резало) */
+  --dash-safe-bottom: 70px;  /* отступ снизу (чтобы не резало) */
+  --dash-safe-x: 22px;       /* боковые отступы (по желанию) */
+}
+
+/* главный скролл-контейнер с виджетами */
+.widgets .dashboard{
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  /* самое важное: отступы, чтобы тени/края не резались */
+  padding: var(--dash-safe-top) var(--dash-safe-x) var(--dash-safe-bottom) !important;
+  box-sizing: border-box;
+
+  /* чтобы тени не “срезались” визуально на границе */
+  scroll-padding-top: var(--dash-safe-top);
+  scroll-padding-bottom: var(--dash-safe-bottom);
+}
+
+@media (min-width: 901px){
+  body.sidebar-static .widgets .dashboard{
+    padding-left: var(--dash-safe-x) !important;
+  }
+}
+
+/* зона, где абсолютные виджеты — не должна резать детей */
+/* ВАЖНО: dashArea должен быть full width */
+#dashArea, .dash-area {
+  width: 100%;
+  max-width: none !important;
+  margin: 0 !important;
+  position: relative;
+}
+
+/* Если родитель режет ширину (часто так делают) */
+#workspace, .workspace, .widgets, .dashboard {
+  max-width: none !important;
+}
+
+
+/* если где-то выше у тебя стоит overflow:hidden на обёртках — это тоже режет */
+#workspace,
+.app,
+.widgets{
+  overflow: visible;
+}
+
+
+
+
+/* =========================================================
+   FIX: Search OFF без "прыжка" и без обрезания
+   (вставь В САМЫЙ КОНЕЦ newtab.css)
+========================================================= */
+
+/* 1) Нормальная раскладка по высоте: верх (search) + низ (workspace) */
+.app{
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+
+
+
+
+
+/* ===============================
+   DISABLE WIDGET RESIZE COMPLETELY
+================================= */
+
+/* запрет нативного resize (если где-то был включён) */
+.widget{
+  resize: none !important;
+}
+
+/* прячем любые элементы изменения размера/пресеты, если они остались */
+.widget .widget-size,
+.widget .widget-resize,
+.widget .widget-resizer,
+.widget .resize-handle,
+.widget .ui-resizable-handle{
+  display: none !important;
+}
+
+
+/* =========================
+   Favorites: fixed size, no wrap
+   ========================= */
+
+:root{
+  --fav-card-h: 270px; /* стандартная высота Favorites — подстрой если хочешь */
+}
+
+/* карточка Favorites всегда одной высоты */
+#favCard{
+  grid-column: 1;
+  grid-row: 4;
+  align-self: start;
+  width: 220px;
+  height: 220px;
+  max-height: 220px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+#favCard > h2 {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+/* контейнер слотов занимает остаток места */
+#favSlots{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* каждый слот не должен раздуваться по высоте */
+.fav-slot{
+  align-items: center;
+}
+
+/* важно: даёт эллипсису работать внутри flex */
+.fav-meta{
+  min-width: 0;
+}
+
+/* запрет переносов + троеточие */
+.fav-title,
+.fav-url{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+:root{ --ui-opacity: 1; }
+
+#workspace{
+  opacity: var(--ui-opacity);
+  transition: opacity .18s ease;
+}
+
+
+.geo-cta{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.geo-text{
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.geo-btn{
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor:pointer;
+  font-weight: 800;
+}
+.geo-btn:hover{ filter: brightness(1.08); }
+
+
+/* WEATHER layout (как на скрине) */
+#weather.card.weather { position: relative; padding: 24px 26px; }
+/* row */
+#weather .weather-row{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+}
+
+/* left block */
+#weather .weather-left{ min-width:0; }
+
+/* right block: emoji + temp + button */
+#weather .weather-right{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+#weather .weather-city{
+  font-weight:900;
+  font-size:18px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#weather .weather-sub{
+  font-size:13px;
+  opacity:.85;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#weather .weather-emoji{ font-size:38px; line-height:1; }
+#weather .weather-temp{ font-weight:1000; font-size:28px; letter-spacing:.2px; }
+
+#weather .weather-geo{
+  position: static;          /* важно */
+  flex: 0 0 auto;            /* важно */
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+  cursor:pointer;
+  margin-left:0;
+}
+
+#weather .weather-geo[hidden]{ display:none !important; }
+
+#weather .weather-manual{
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: calc(100% - 24px);
+  max-width: none;
+}
+
+#weather.weather-manual-selected .weather-manual{
+  display: none;
+}
+
+body.layout-editing #weather.weather-manual-selected .weather-manual{
+  display: flex;
+}
+
+#weather .weather-city-input{
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  outline: none;
+}
+
+#weather .weather-city-input::placeholder{ color: var(--muted); }
+
+#weather .weather-city-apply{
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+#weather .weather-city-apply:hover{ filter: brightness(1.08); }
+
+#weather .weather-size-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+body.layout-editing #weather .weather-size-toggle {
+  display: flex;
+}
+
+#weather .weather-size-toggle:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.3);
+}
+
+/* ===== Background VIDEO layer ===== */
+body.bg-video {
+  background-image: none !important;
+}
+
+#bgVideo {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  pointer-events: none;
+  z-index: -1;
+}
+
+
+/* Favorites: large mode => 2 columns, 6 slots */
+#favCard.is-large .fav-slots{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+
+
+/* Кнопка смены размера (видна только в Customize) */
+body:not(.layout-editing) .widget-size-toggle { display:none; }
+
+.widget-size-toggle{
+  position:absolute;
+  top:12px;
+  right:92px; /* рядом с handle/delete */
+  width:36px;
+  height:36px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.10);
+  color: rgba(255,255,255,.92);
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  z-index:5;
+}
+.widget-size-toggle:hover{
+  background: rgba(255,255,255,.14);
+}
+
+
+/* =========================
+   DATE — Calendar (large mode)
+========================= */
+
+#dateCard .date-mini { 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+#dateCard .date-cal{
+  display: none;
+  height: 100%;
+  width: 100%;
+}
+
+#dateCard.is-calendar .date-mini{ display:none; }
+#dateCard.is-calendar .date-cal{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+}
+
+#dateCard .cal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 6px 6px 8px;
+}
+
+#dateCard .cal-title{
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: .02em;
+  text-align:center;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dateCard .cal-nav{
+  width: 34px;
+  height: 30px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: rgba(255,255,255,.06);
+  color: inherit;
+  cursor: pointer;
+}
+
+#dateCard .cal-weekdays{
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  padding: 0 6px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  opacity: .75;
+  text-align:center;
+}
+
+#dateCard .cal-grid{
+  flex: 1;
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr); /* ключ: всегда 6 строк => размер не прыгает */
+  gap: 6px;
+  padding: 0 6px 8px;
+}
+
+#dateCard .cal-day{
+  display:grid;
+  place-items:center;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 13px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  user-select:none;
+}
+
+#dateCard .cal-day.is-out{ opacity: .35; }
+#dateCard .cal-day.is-today{
+  outline: 2px solid rgba(255,255,255,.45);
+  outline-offset: -2px;
+}
+
+
+/* Weather compact: only emoji + temp */
+#weather.wx-compact{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+#weather.wx-compact #weatherEmoji{
+  font-size: 40px;
+  line-height: 1;
+}
+
+#weather.wx-compact #weatherTemp{
+  font-weight: 1000;
+  font-size: 40px;
+  letter-spacing: .2px;
+}
+
+
+/* =========================
+   BG FOCUS EDITOR
+========================= */
+.bg-focus[hidden]{ display:none; }
+.bg-focus{
+  position:fixed; inset:0;
+  z-index:9999;
+}
+.bg-focus-backdrop{
+  position:absolute; inset:0;
+  background: rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+}
+.bg-focus-card{
+  position:absolute;
+  left:50%; top:50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, calc(100vw - 32px));
+  border-radius: 22px;
+  padding: 14px;
+  background: rgba(20,22,30,.75);
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 24px 80px rgba(0,0,0,.45);
+  color: #fff;
+}
+.bg-focus-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 6px 6px 10px;
+}
+.bg-focus-title{ font-weight:800; letter-spacing:.2px; opacity:.95; }
+.bg-focus-x{
+  border:0; background: rgba(255,255,255,.10);
+  color:#fff; width:36px; height:36px; border-radius:12px;
+  cursor:pointer;
+}
+.bg-focus-preview{
+  position:relative;
+  width:100%;
+  height: min(52vh, 420px);
+  border-radius: 18px;
+  overflow:hidden;
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.12);
+  user-select:none;
+  touch-action:none;
+}
+.bg-focus-preview img,
+.bg-focus-preview video{
+  position:absolute; inset:0;
+  width:100%; height:100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  transform: translateZ(0);
+}
+.bg-focus-hint{
+  position:absolute; left:12px; bottom:12px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(0,0,0,.35);
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 12px;
+  opacity:.9;
+}
+.bg-focus-controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 10px 6px 0;
+}
+.bg-focus-actions{
+  display:flex; align-items:center;
+  gap:10px;
+  padding: 12px 6px 4px;
+}
+.bg-focus-spacer{ flex:1; }
+.bg-focus-btn{
+  border:0; cursor:pointer;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.10);
+  color:#fff;
+  font-weight:700;
+}
+.bg-focus-btn.primary{ background: rgba(124,92,255,.85); }
+.bg-focus-btn.ghost{ background: rgba(255,255,255,.10); }
+.bg-focus-preview{
+  cursor: grab;
+  cursor: -webkit-grab;
+}
+
+.bg-focus-preview.is-dragging{
+  cursor: grabbing;
+  cursor: -webkit-grabbing;
+}
+
+/* чтобы всегда тянулось за превью, а не за img/video */
+.bg-focus-preview img,
+.bg-focus-preview video{
+  pointer-events: none;
+}
+
+
+.bg-menu-title{
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: .2px;
+  opacity: .92;
+  margin: 2px 2px 10px;
+  user-select: none;
+}
+/* =========================================================
+   BG UI — make Background popover + Focus editor match glass style
+   (PASTE AT THE VERY END of newtab.css)
+========================================================= */
+
+/* 1) Общий glass-вид для popover и модалки */
+.bg-popover,
+.bg-focus-card{
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-br) !important;
+  color: var(--text) !important;
+
+  backdrop-filter: blur(30px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+
+  box-shadow: var(--shadow) !important;
+}
+
+/* Заголовок в popover */
+.bg-menu-title{
+  color: var(--text) !important;
+  opacity: .92 !important;
+  margin: 2px 2px 10px !important;
+}
+
+
+
+
+
+/* 4) Убираем фиолетовый "Apply" (primary) — делаем как все */
+.bg-focus-btn.primary{
+  background: var(--btn-bg) !important;
+  border: 1px solid var(--btn-br) !important;
+  color: var(--text) !important;
+}
+
+/* 5) Backdrop модалки — помягче, но в том же стиле */
+.bg-focus-backdrop{
+  background: rgba(0,0,0,.35) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* 6) Превью рамка — как у карточек */
+.bg-focus-preview{
+  border: 1px solid var(--card-br) !important;
+  background: rgba(0,0,0,0.10) !important;
+}
+
+/* Подсказка на превью — читаемо на картинке */
+.bg-focus-hint{
+  color: rgba(255,255,255,0.92) !important;
+  background: rgba(0,0,0,0.35) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+}
+
+
+/* =====================
+   NOTES WIDGET
+===================== */
+
+
+.notes-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.notes-title{
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.notes-clear{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+  cursor:pointer;
+}
+
+.notes-clear:hover{
+  background: rgba(255,255,255,0.12);
+}
+
+.notes-text{
+  width:100%;
+  min-height:160px;
+  height: calc(100% - 52px);
+  resize:none;
+
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.14);
+  color: inherit;
+
+  padding:14px 16px;
+  outline:none;
+}
+
+body.dark .notes-text{
+  background: rgba(0,0,0,0.22);
+}
+
+
+/* =========================================================
+   Favorites (LARGE): keep widget size, fix spacing + truncate text
+   Paste at the VERY END of newtab.css
+========================================================= */
+
+/* 1) Truncation: длинный текст не должен "раздувать" соседей */
+#favCard, #favCard * { min-width: 0; }
+
+#favCard .fav-slot { overflow: hidden; min-width: 0; }
+#favCard .fav-meta { min-width: 0; flex: 1 1 auto; }
+
+#favCard .fav-title,
+#favCard .fav-url{
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* кнопки/иконки не сжимаем — пусть сжимается текст */
+#favCard .fav-num,
+#favCard .fav-ico,
+#favCard .fav-clear,
+#favCard .fav-add,
+#favCard .fav-pick{
+  flex: 0 0 auto;
+}
+
+/* 2) ВАЖНО: только в LARGE делаем карточку колонкой,
+      а список слотов растягиваем по высоте карточки */
+#favCard.is-large{
+  display: flex;
+  flex-direction: column;
+}
+
+#favCard.is-large > h2{
+  flex: 0 0 auto; /* заголовок не растягивается */
+}
+
+#favCard.is-large #favSlots{
+  flex: 1 1 auto;   /* слоты занимают всю оставшуюся высоту */
+  min-height: 0;
+}
+
+/* 3) LARGE: 2 колонки, 3 строки + распределяем пустоту вниз (как на 2-й фотке) */
+#favCard.is-large #favSlots{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  /* ключевая строка — убирает "пустоту снизу", раздвигая ряды */
+  align-content: space-between;
+}
+
+
+/* =========================================================
+   CUSTOMIZE DRAWER (RIGHT) — clean UX
+   Paste at VERY END of newtab.css
+========================================================= */
+
+:root{
+  --drawer-w: 380px;
+  --drawer-gap: 18px;
+}
+
+/* Optional: clearer editing frame on widgets */
+body.layout-editing .widget{
+  outline: 2px dashed rgba(255,255,255,0.26);
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+body.layout-editing [data-widget]:hover {
+  outline: 2px dashed rgba(255,255,255,0.5);
+  transform: scale(1.01);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+
+body.layout-editing [data-widget][draggable="true"] {
+  opacity: 1;
+   outline-offset: 8px;
+}
+ 
+
+
+/* Mobile: drawer becomes full width */
+@media (max-width: 720px){
+  :root{ --drawer-w: 100vw; --drawer-gap: 0px; }
+  #layoutPanel{ border-radius: 0; }
+  body.layout-editing.drawer-open .dash-area,
+  body.layout-editing.drawer-open .top-search,
+  body.layout-editing.drawer-open .bookmarks-view > .card.bookmarks{
+    width: min(var(--pagew), calc(100vw - 40px)) !important;
+    margin-right: 0 !important;
+  }
+}
+/* ===== PINNED SEARCH TOP BAR ===== */
+#searchCard{
+  z-index: 999;                 /* всегда поверх */
+  border-radius: 22px;
+  padding: 14px 16px 16px;
+}
+
+#searchCard .welcome-bar{
+  display:flex; align-items:center; gap:10px;
+  color: var(--text);
+  font-weight: 600;
+  user-select: none;
+}
+
+#searchCard .welcome-text{ opacity:.75; }
+
+#searchCard .welcome-name{
+  cursor:pointer;
+  padding: 6px 12px;
+  border-radius: 14px;
+  color: var(--text);
+  background: var(--btn-bg);
+  border: 1px solid var(--btn-br);
+}
+
+#searchCard .welcome-input{
+  display:none;
+  width: 260px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--btn-br);
+  background: var(--inner);
+  color: var(--text);
+  outline:none;
+}
+
+#searchCard .welcome-bar.editing .welcome-name{ display:none; }
+#searchCard .welcome-bar.editing .welcome-input{ display:inline-block; }
+
+#searchCard #searchForm{ width:100%; }
+
+#searchCard #searchInput{
+  width:100%;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--card-br);
+  background: var(--inner);
+  color: var(--text);
+  outline:none;
+}
+#searchCard #searchInput::placeholder{ color: var(--muted); }
+
+#searchCard .search-size-toggle {
+  position: absolute;
+  top: 48px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+body.layout-editing #searchCard .search-size-toggle {
+  display: flex;
+}
+
+#searchCard .search-size-toggle:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.3);
+}
+
+/* =========================================================
+   FIX: widgets don't overlap pinned search bar
+========================================================= */
+
+/* Отступ сверху для всех виджетов (кроме самого searchCard) */
+.dash-area .widget:not(#searchCard) {
+  margin-top: 0 !important;
+}
+
+/* В FREE LAYOUT: виджеты не могут быть выше, чем search bar */
+body:not(.layout-editing) .dash-area.free-layout .widget:not(#searchCard) {
+  /* JS установит min-top через style, но на всякий случай: */
+  min-height: 0;
+}
+
+/* STACK MODE: первый виджет отступает от search bar */
+.dash-area:not(.free-layout) .widget:first-of-type:not(#searchCard) {
+  margin-top: 150px !important; /* высота searchCard + зазор */
+}
+
+/* В Customize mode — видимый зазор, чтобы не путаться */
+.top-search{ position: relative; z-index: 3000; }
+#dashArea{ position: relative; z-index: 1; }
+
+
+/* =========================================================
+   FIX: Search bar занимает первую строку grid,
+   остальные виджеты начинаются ниже
+========================================================= */
+
+/* Search — первая строка, на всю ширину */
+#searchCard{
+  grid-column: 1 / -1;
+  grid-row: 1;
+  align-self: start;
+}
+
+/* Укороченная версия поиска - не занимает всю ширину */
+#searchCard.search-compact{
+  grid-column: 2 / 3;
+  max-width: 420px;
+  justify-self: center;
+}
+
+/* Сдвигаем все "первые" виджеты на 1 строку вниз */
+#todoCard{  grid-row: 2 !important; }
+#weather{   grid-row: 3 !important; }
+#noteCard{  grid-row: 4 !important; }
+#mapCard{   grid-row: 4 !important; }
+
+#dateCard{  grid-row: 2 !important; }
+#clockCard{ grid-row: 3 !important; }
+#favCard{   grid-row: 4 !important; }
+#audioCard{ grid-row: 4 !important; }
+
+/* В free-layout НЕ делаем search абсолютным */
+.dash-area.free-layout .widget:not(#searchCard){
+  position: absolute;
+}
+.dash-area.free-layout #searchCard{
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+}
+
+
+
+
+/* =========================================================
+   CUSTOMIZE: drawer не перекрывает виджеты
+   Идея: мы НЕ сжимаем dashboard, а сдвигаем весь dash-area влево
+========================================================= */
+:root{
+  --drawer-w: 380px;
+  --drawer-gap: 18px; /* расстояние между контентом и панелью */
+}
+
+/* плавный сдвиг */
+.dash-area{
+  transition: transform .28s cubic-bezier(.2,.8,.2,1);
+}
+
+/* Desktop: "окно" уезжает влево и становится безопасной ширины */
+@media (min-width: 901px){
+  body.layout-editing.drawer-open .dash-area{
+    /* безопасная ширина, чтобы никогда не оказаться под drawer */
+    width: min(var(--pagew), calc(100vw - 80px - var(--drawer-w) - var(--drawer-gap))) !important;
+
+    /* сдвиг центра в safe-area (как ты и хочешь: всё окно влево) */
+    transform: translateX(calc((var(--drawer-w) + var(--drawer-gap)) * -0.5));
+  }
+}
+
+/* когда Done — возвращаем обратно */
+body:not(.layout-editing) .dash-area{
+  transform: translateX(0);
+}
+
+
+/* =========================================================
+   CUSTOMIZE = 2-column layout (NO OVERLAY)
+   Paste at the VERY END of newtab.css
+========================================================= */
+
+:root{
+  --drawer-w: 380px;
+  --drawer-gap: 18px;
+}
+
+/* В customize превращаем workspace в 2 колонки */
+body.layout-editing #workspace{
+  display: grid !important;
+  grid-template-columns: 1fr var(--drawer-w) !important;
+  gap: var(--drawer-gap) !important;
+  align-items: stretch !important;
+}
+
+/* Левая колонка: виджеты занимают всю высоту */
+body.layout-editing #widgets{
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  /* ВАЖНО: отменяем любые слайды/трансформы, которые у тебя есть для bookmarks/help */
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Пока Customize открыт — прячем другие "страницы", чтобы они не мешали */
+body.layout-editing #bookmarksView,
+body.layout-editing #helpView{
+  display: none !important;
+}
+
+/* Правая колонка: panel становится обычной колонкой, не fixed */
+body.layout-editing #layoutPanel{
+  grid-column: 2 !important;
+
+  position: sticky !important;
+  top: 0 !important;
+  right: auto !important;
+  bottom: auto !important;
+
+  height: 100vh !important;
+  width: var(--drawer-w) !important;
+
+  transform: none !important;
+  /* Keep visibility controlled by the data-open attribute
+     so the panel only appears when the menu button explicitly opens it. */
+  opacity: 0 !important;
+  pointer-events: none !important;
+
+  border-radius: 28px !important;
+}
+
+/* In customize mode the panel is positioned as a right column,
+   but remains hidden until explicitly opened via data-open="1" */
+body.layout-editing #layoutPanel[data-open="1"] {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* hidden не должен убивать анимацию/видимость во время editing */
+body.layout-editing #layoutPanel[hidden]{
+  display: block !important;
+}
+
+/* Внутренний скролл в панели */
+body.layout-editing #layoutPanel{
+  overflow: auto !important;
+}
+
+/* Чтобы free-layout виджеты не “улетали” в правую колонку */
+body.layout-editing #widgets{
+  overflow: clip !important; /* можно заменить на hidden, если clip не нравится */
+}
+
+/* dash-area должен считаться от ЛЕВОЙ колонки (100%), а не от 100vw */
+body.layout-editing.drawer-open .dash-area{
+  width: min(var(--pagew), calc(100% - 40px)) !important;
+  margin: 0 auto !important;
+}
+
+
+/* =========================================================
+   FIX: Customize drawer opens fully
+   (PASTE AT THE VERY END)
+========================================================= */
+
+:root{
+  --drawer-w: 380px;
+}
+
+/* панель всегда fixed справа */
+#layoutPanel{
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: var(--drawer-w) !important;
+  max-width: 100vw !important;
+
+  /* по умолчанию спрятано */
+  transform: translateX(calc(100% + 8px)) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+
+  z-index: 6000 !important;
+}
+
+/* НЕ даём hidden убить анимацию (у тебя так уже было, но закрепим) */
+#layoutPanel[hidden]{
+  display: block !important;
+}
+
+/* когда Customize включён — панель полностью на экране */
+body.layout-editing #layoutPanel{
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* STRONG OVERRIDE: when drawer is opened, do NOT shift the dashboard
+   (prevents widgets from 'flying' left when the menu appears) */
+body.layout-editing.drawer-open .dash-area,
+body.layout-editing.drawer-open .widgets .dashboard,
+body.layout-editing.drawer-open #dashArea {
+  transform: none !important;
+  width: auto !important;
+  margin: 0 auto !important;
+}
+
+/* Ensure individual widget positions remain unchanged */
+body.layout-editing.drawer-open .dash-area .widget{
+  transform: none !important;
+}
+
+/* мобилка: панель на весь экран */
+@media (max-width: 900px){
+  #layoutPanel{
+    width: 100vw !important;
+    transform: translateX(100%) !important;
+    border-radius: 0 !important;
+  }
+  body.layout-editing #layoutPanel{
+    transform: translateX(0) !important;
+  }
+}
+
+
+/* =========================================================
+   HOTFIX — unify layout (no conflicts)
+   Paste at THE VERY END of newtab.css
+========================================================= */
+
+:root{
+  --drawer-w: 380px;
+  --dash-safe-top: 22px;
+  --dash-safe-bottom: 70px;
+  --dash-safe-x: 22px;
+}
+
+/* ---------- 1) Base heights & overflow (no 100vh nesting issues) ---------- */
+html, body { height: 100% !important; margin: 0 !important; }
+body { overflow: hidden !important; }
+
+.app{
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* workspace занимает всё оставшееся место */
+.workspace{
+  height: auto !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+#workspace{
+  position: relative !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* ---------- 2) Pages slide: widgets <-> bookmarks (stable) ---------- */
+#widgets,
+#bookmarksView{
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+
+  transition: transform .35s cubic-bezier(.2,.8,.2,1) !important;
+  will-change: transform !important;
+}
+
+/* default state */
+#widgets{
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+}
+#bookmarksView{
+  transform: translateX(-105%) !important;
+  pointer-events: none !important;
+}
+
+/* open bookmarks */
+#workspace.show-bookmarks #widgets{
+  transform: translateX(105%) !important;
+  pointer-events: none !important;
+}
+#workspace.show-bookmarks #bookmarksView{
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+}
+
+/* help overlay shouldn't steal clicks on pages */
+#workspace.help-open #bookmarksView{ pointer-events: none !important; }
+
+/* ---------- 3) One scroll only: dashboard & bookmarks ---------- */
+.widgets{
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* главный скролл — только тут */
+.widgets .dashboard{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: var(--dash-safe-top) var(--dash-safe-x) var(--dash-safe-bottom) !important;
+  box-sizing: border-box !important;
+
+  scroll-padding-top: var(--dash-safe-top) !important;
+  scroll-padding-bottom: var(--dash-safe-bottom) !important;
+}
+
+/* не режем виджеты/тени */
+.dash-area, #dashArea{
+  overflow: visible !important;
+}
+
+/* bookmarks inner scroll */
+.bookmarks-view,
+#bookmarksView{
+  overflow: hidden !important;
+}
+.bookmarks-view .card.bookmarks,
+#bookmarksView .card.bookmarks{
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* ВАЖНО: запрещаем "overflow: visible" на больших контейнерах */
+.app, #workspace, .widgets{
+  overflow: hidden !important;
+}
+
+/* ---------- 4) Customize drawer: ONLY overlay mode (no 2-column grid) ---------- */
+/* нейтрализуем твой “2-column customize layout (NO OVERLAY)” */
+body.layout-editing #workspace{
+  display: block !important;   /* НЕ grid */
+}
+
+/* drawer: fixed overlay */
+#layoutPanel{
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: var(--drawer-w) !important;
+  max-width: 100vw !important;
+  height: 100vh !important;
+
+  transform: translateX(calc(100% + 8px)) !important; /* спрятано */
+  opacity: 0 !important;
+  pointer-events: none !important;
+
+  z-index: 6000 !important;
+  overflow: auto !important;
+
+  /* (визуал) можешь оставить, но не обязательно */
+  border-radius: 28px 0 0 28px !important;
+}
+
+/* open state */
+body.layout-editing #layoutPanel{
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* в Customize всегда оставляем widgets видимыми (а не “улетевшими”) */
+body.layout-editing #widgets{
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+}
+body.layout-editing #bookmarksView,
+body.layout-editing #helpView{
+  pointer-events: none !important;
+}
+
+/* mobile: drawer full screen */
+@media (max-width: 900px){
+  #layoutPanel{
+    width: 100vw !important;
+    transform: translateX(100%) !important;
+    border-radius: 0 !important;
+  }
+  body.layout-editing #layoutPanel{
+    transform: translateX(0) !important;
+  }
+}
+/* ---------- 5) :has() fallback (for Firefox / older engines) ---------- */
+/* Enhanced: включаем :has() только если поддерживается */
+@supports selector(:has(*)) {
+  #layoutPanel .layout-item:has(input:checked)::before{
+    background: linear-gradient(135deg, rgba(56,189,248,.9), rgba(99,102,241,.9));
+    box-shadow:
+      0 10px 22px rgba(0,0,0,0.22),
+      inset 0 0 0 1px rgba(255,255,255,0.18);
+  }
+}
+
+/* Fallback без :has(): просто усиливаем текст при checked */
+#layoutPanel .layout-item input:checked ~ span{
+  font-weight: 900 !important;
+  color: rgba(255,255,255,0.98) !important;
+  opacity: 1 !important;
+  text-shadow: 0 10px 24px rgba(0,0,0,0.18) !important;
+}
+
+/* Если ты добавляешь класс на item (например JS: item.classList.toggle('is-on', checked)) */
+#layoutPanel .layout-item.is-on::before{
+  background: linear-gradient(135deg, rgba(56,189,248,.9), rgba(99,102,241,.9)) !important;
+  box-shadow:
+    0 10px 22px rgba(0,0,0,0.22),
+    inset 0 0 0 1px rgba(255,255,255,0.18) !important;
+}
+
+/* VS может ругаться на overflow: clip — делаем безопасный вариант */
+body.layout-editing #widgets{
+  overflow: hidden !important;
+}
+/* =========================
+   FORCE CUSTOMIZE PANEL OPEN/CLOSE
+   (PASTE AT VERY END)
+========================= */
+
+:root { --drawer-w: 380px; }
+
+#layoutPanel{
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: var(--drawer-w) !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+
+  z-index: 999999 !important;
+
+  overflow: auto !important;
+
+  /* closed state */
+  transform: translateX(110%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* hidden не должен убивать панель (иначе анимации не будет) */
+#layoutPanel[hidden]{
+  display: block !important;
+}
+
+/* open state — ТОЛЬКО через класс на body */
+body.layout-editing #layoutPanel{
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+/* ===== ABSOLUTE FORCE: layout panel must be visible when editing ===== */
+body.layout-editing #layoutPanel{
+  display: block !important;
+  visibility: visible !important;
+
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+
+  width: 380px !important;
+  height: 100vh !important;
+
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+
+  z-index: 2147483647 !important; /* максимальный */
+}
+
+/* даже если hidden стоит — не прячем в editing */
+body.layout-editing #layoutPanel[hidden]{
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* на всякий случай: когда editing — убираем трансформы у “страниц” */
+body.layout-editing #widgets,
+body.layout-editing #bookmarksView{
+  transform: none !important;
+}
+/* Background media layer (image/video) */
+#bgImg, #bgVideo{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: 50% 50%;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+/* ==== Background media (page) ==== */
+#bgImg, #bgVideo{
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  object-position: 50% 50%;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: center center;
+}
+
+/* ==== Focus editor preview (modal) ==== */
+#bgFocusPreview{
+  position: relative;
+  overflow: hidden;
+}
+
+#bgFocusImg, #bgFocusVid{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  transform-origin: center center;
+}
+/* маленькие квадратные кнопки (rotate) */
+#bgFocus .bg-rot,
+#bgFocus .bgFocusRot,
+#bgFocus [data-rot]{
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+}
+
+/* =========================
+   PHOTOS — SMALL SQUARE (like Weather small, but square)
+   Paste at VERY END
+========================= */
+
+:root{
+  --photos-small: 220px; /* как маленький виджет, но квадрат */
+}
+
+/* фиксируем размер карточки, чтобы grid её НЕ растягивал */
+.widget.photos,
+.card.photos{
+  width: var(--photos-small) !important;
+  height: var(--photos-small) !important;
+  padding: 12px !important;
+  overflow: hidden !important;
+  align-self: start;
+  justify-self: start;
+}
+
+/* хедер компактнее */
+.widget.photos .photos-head,
+.card.photos .card-head{
+  margin-bottom: 8px !important;
+}
+
+/* сетка 3x3 как iPhone */
+.widget.photos .photos-grid,
+.card.photos .photos-grid{
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+}
+
+/* каждая плитка квадрат */
+.widget.photos .photos-tile,
+.card.photos .photos-grid img{
+  aspect-ratio: 1 / 1;
+}
+
+.widget.photos .photos-tile{
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+
+.widget.photos .photos-tile img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* кнопки в хедере меньше */
+.widget.photos .photos-btn,
+.card.photos .icon-btn{
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 12px !important;
+}
+
+
+/* Photos: image must cover the tile like iOS */
+.widget.photos .photos-grid{
+  height: calc(100% - 36px); /* место под header (подгони если нужно) */
+  margin-top: 8px;
+}
+
+.widget.photos .photos-tile{
+  width: 100%;
+  height: 100%;
+}
+
+/* WIDE MODE - занимает два виджета по ширине */
+.widget.photos.photos-wide,
+.card.photos.photos-wide{
+  width: calc(var(--photos-small) * 2 + 24px) !important; /* 2 виджета + gap */
+  height: var(--photos-small) !important;
+  grid-column: span 2 !important;
+}
+
+.widget.photos.photos-wide .photos-grid,
+.card.photos.photos-wide .photos-grid{
+  grid-template-columns: repeat(6, 1fr) !important;
+}
+
+
+.widget.photos .photos-tile img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;     /* ВОТ ЭТО как iPhone */
+  object-position: center;
+  display: block;
+}
+
+
+/* подсветка выбранной фотки только в Customize */
+body.layout-editing .photos-grid img.is-featured{
+  outline: 2px solid rgba(124, 92, 255, 0.9);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
+  border-radius: 10px;
+}
+/* =========================
+   PHOTOS WIDGET: cover mode
+   ========================= */
+
+.widget.photos{
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Фон-фото на весь виджет */
+.widget.photos::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--photos-bg, none);
+  background-position: 50% var(--photos-bg-pos-y, 50%);
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: 0;
+}
+
+/* В обычном режиме прячем ВСЁ UI */
+.widget.photos .card-head,
+.widget.photos .photos-grid{
+  display: none !important;
+}
+
+/* В Customize Mode — показываем UI поверх */
+body.layout-editing .widget.photos{
+  padding: 14px; /* можешь менять */
+}
+
+body.layout-editing .widget.photos .card-head{
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-right: 84px;
+  position: relative;
+  z-index: 2;
+}
+
+body.layout-editing .widget.photos .card-head .title{
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+body.layout-editing .widget.photos .card-head .actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+body.layout-editing .widget.photos .card-head .icon-btn{
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 15px;
+}
+
+body.layout-editing .widget.photos .photos-grid{
+  display: grid !important;
+  position: relative;
+  z-index: 2;
+  margin-top: 10px;
+  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+body.layout-editing .widget.photos .photos-grid img{
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Подсветка выбранной фотки */
+body.layout-editing .widget.photos .photos-grid img.is-featured{
+  outline: 2px solid rgba(255,255,255,.95);
+  outline-offset: 2px;
+}
+
+
+/* Photos: только кнопки + / shuffle */
+.widget.photos .icon-btn{
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  outline: 0;
+
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  background: rgba(255,255,255,.10);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  color: rgba(255,255,255,.92);
+  font-size: 18px;
+  line-height: 1;
+
+  transition: background .12s ease, transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+}
+
+.widget.photos .icon-btn:hover{
+  background: rgba(255,255,255,.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);
+  transform: translateY(-1px);
+}
+
+.widget.photos .icon-btn:active{
+  transform: translateY(0) scale(.96);
+  opacity: .95;
+}
+
+.widget.photos .icon-btn:focus-visible{
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.22),
+    0 0 0 2px rgba(124,92,255,.55);
+}
+
+
+/* =========================
+   NOTES — list only + modal editor
+========================= */
+
+.notes-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 12px 14px 10px;
+}
+
+.notes-title{
+  margin: 0 0 10px 0;
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.notes-add{
+  width:34px;
+  height:34px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  cursor:pointer;
+}
+.notes-add:hover{ background: rgba(255,255,255,0.14); }
+
+.notes-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding: 0 14px 14px;
+  max-height: calc(100% - 56px);
+  overflow:auto;
+}
+
+.notes-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  cursor:pointer;
+  user-select:none;
+}
+
+.notes-item:hover{
+  background: rgba(255,255,255,0.10);
+}
+
+.notes-item-title{
+  color: rgba(255,255,255,0.92);
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.notes-item-meta{
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  flex:0 0 auto;
+}
+
+/* ===== Modal ===== */
+
+.notes-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+}
+
+.notes-modal[hidden]{ display:none; }
+
+.notes-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.notes-modal-window{
+  position: relative;
+  width: min(980px, calc(100vw - 48px));
+  height: min(720px, calc(100vh - 48px));
+  margin: 24px auto;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(20, 24, 35, 0.55);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.notes-modal-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+}
+
+.notes-modal-title{
+  flex:1;
+  min-width: 0;
+  border:none;
+  outline:none;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: rgba(255,255,255,0.92);
+  font-weight:700;
+}
+
+.notes-modal-actions{
+  display:flex;
+  gap:8px;
+}
+
+.notes-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  overflow-x: auto;
+}
+
+.notes-toolbar-select,
+.notes-tool-btn{
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+  border-radius: 10px;
+  height: 34px;
+}
+
+.notes-toolbar-select{
+  min-width: 120px;
+  padding: 0 10px;
+}
+
+.notes-tool-btn{
+  min-width: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.notes-tool-btn:hover,
+.notes-toolbar-select:hover{
+  background: rgba(255,255,255,0.14);
+}
+
+.notes-modal-text{
+  flex:1;
+  width:100%;
+  border:none;
+  outline:none;
+  background: transparent;
+  color: rgba(255,255,255,0.92);
+  padding: 14px;
+  overflow: auto;
+  line-height: 1.4;
+}
+
+.notes-modal-text:empty::before{
+  content: attr(data-placeholder);
+  color: rgba(255,255,255,0.45);
+}
+
+.notes-modal-text h1,
+.notes-modal-text h2,
+.notes-modal-text h3{
+  margin: 10px 0 6px;
+}
+
+.notes-modal-text blockquote{
+  margin: 10px 0;
+  padding-left: 10px;
+  border-left: 3px solid rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.82);
+}
+
+.notes-modal-text table{
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.notes-modal-text td,
+.notes-modal-text th{
+  border: 1px solid rgba(255,255,255,0.22);
+  padding: 6px;
+}
+
+.notes-modal-text img{
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+.notes-modal-bottom{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+}
+
+.notes-modal-hint{
+  color: rgba(255,255,255,0.55);
+  font-size: 12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.notes-modal-btn{
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+  padding: 10px 14px;
+  cursor:pointer;
+}
+
+.notes-modal-btn:hover{ background: rgba(255,255,255,0.14); }
+
+.notes-modal-btn.primary{
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.16);
+  font-weight: 700;
+}
+/* Notes: список не должен раздувать виджет */
+#noteCard {
+  grid-column: 3;
+  grid-row: 4;
+  align-self: start;
+  width: 420px;
+  height: 220px;
+  max-height: 220px;
+  box-sizing: border-box;
+  overflow: hidden;              /* чтобы внутренности не расширяли карточку */
+}
+
+/* контейнер, где лежит список заметок */
+#noteCard .notes-list {
+  max-height: 120px;             /* подобрано под высоту 200px минус заголовок */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;            /* чтобы скролл не наезжал на текст */
+}
+
+/* если у тебя есть верхняя панель/заголовок внутри notes */
+#noteCard .notes-head {
+  flex: 0 0 auto;
+}
+
+/* если noteCard у тебя flex */
+#noteCard .notes-body {
+  min-height: 0;                 /* ВАЖНО для корректного скролла внутри flex */
+}
+
+
+/* Analog clock inside clockCard when large */
+#clockCard.is-analog{
+  width: 220px !important;
+  height: 220px !important;
+  max-height: 220px !important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#clockCard .clock-digital{
+  display: block;
+}
+
+#clockCard .clock-analog{
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#clockCard.is-analog .clock-digital{
+  display: none;
+}
+
+#clockCard.is-analog .clock-analog{
+  display: flex;
+}
+
+#clockCard .clock-analog svg{
+  width: 100%;
+  height: 100%;
+  max-width: 180px;
+  max-height: 180px;
+}
+
+#clockCard .analog-face{
+  stroke: rgba(255,255,255,0.18);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+/* Крестик удаления в строке заметки */
+.note-del{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: transform .12s ease, background .12s ease, border-color .12s ease;
+}
+
+.note-del:hover{
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
+  transform: scale(1.04);
+}
+
+.note-del:active{
+  transform: scale(.96);
+}
+
+/* чтобы кнопка аккуратно стояла справа */
+.note-row{ /* класс строки заметки */
+  display: grid;
+  grid-template-columns: 1fr auto auto; /* title | date | x */
+  gap: 10px;
+  align-items: center;
+}
+
+.note-main{
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note-title{
+  font-weight: 700;
+  color: rgba(255,255,255,.96);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-preview{
+  font-size: 12px;
+  color: rgba(255,255,255,.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note-date{
+  font-size: 12px;
+  color: rgba(255,255,255,.62);
+  white-space: nowrap;
+}
+#bgImg, #bgVideo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1; /* или как у тебя */
+}
+
+
+/* ============================================
+   FORCE: Layout Panel Modal (FINAL CLEANUP)
+   Ensure panel is HIDDEN by default
+============================================ */
+
+#layoutPanel {
+  position: fixed !important;
+  bottom: 90px !important;
+  right: 30px !important;
+  top: auto !important;
+  left: auto !important;
+  width: 320px !important;
+  height: 75vh !important;
+  min-height: 75vh !important;
+  max-height: 75vh !important;
+  background: rgba(20,20,30,0.95) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  z-index: 4000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 16px !important;
+  overflow: auto !important;
+  
+  /* HIDDEN by default - THIS IS THE KEY */
+  transform: scale(0.9) translateY(20px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: all 0.25s ease-out !important;
+}
+
+/* SHOW only when explicitly opened */
+#layoutPanel[data-open="1"] {
+  transform: scale(1) translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+}
+
+/* Default [hidden] attribute should NOT show panel */
+#layoutPanel[hidden] {
+  display: flex !important;
+}
+
+/* Editing mode: keeps panel modal behavior */
+body.layout-editing #layoutPanel {
+  position: fixed !important;
+  bottom: 90px !important;
+  right: 30px !important;
+  top: auto !important;
+  left: auto !important;
+  width: 320px !important;
+  height: 75vh !important;
+  min-height: 75vh !important;
+  max-height: 75vh !important;
+}
+
+/* Menu button: transparent + blur style to match extension */
+.layout-menu-btn{
+  display: none !important; /* default hidden, shown in editing via CSS */
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  z-index: 6001 !important;
+  padding: 10px 14px !important;
+  background: rgba(255,255,255,0.04) !important;
+  color: rgba(255,255,255,0.95) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25) !important;
+}
+
+/* make both floating buttons same size and centered text */
+.layout-menu-btn,
+.layout-done-btn{
+  width: 104px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+/* show in editing mode (but only when drawer is intended to be visible) */
+body.layout-editing.drawer-open .layout-menu-btn,
+body.layout-editing .layout-menu-btn{
+  display: block !important;
+}
+
+.layout-menu-btn:hover{
+  transform: translateY(-3px) !important;
+  background: rgba(255,255,255,0.07) !important;
+}
+
+/* Floating Done button styling: match extension glass + primary accent */
+.layout-done-btn{
+  display: none !important;
+  position: fixed !important;
+  bottom: 30px !important;
+  right: calc(30px + 104px + 8px) !important;
+  z-index: 6001 !important;
+  background: rgba(255,255,255,0.04) !important;
+  color: rgba(255,255,255,0.95) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.20) !important;
+  transition: transform .14s ease, opacity .14s ease !important;
+}
+
+/* show in editing mode */
+body.layout-editing.drawer-open .layout-done-btn,
+body.layout-editing .layout-done-btn{
+  display: block !important;
+}
+
+.layout-done-btn:hover{
+  transform: translateY(-3px) !important;
+  opacity: .98 !important;
+}
+
+/* Widget hide (cross) button shown only in Customize mode */
+.widget-hide-btn{
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.35);
+  color: rgba(255,255,255,0.95);
+  border: 1px solid rgba(255,255,255,0.04);
+  cursor: pointer;
+  font-weight: 700;
+  z-index: 20;
+}
+
+body.layout-editing .widget .widget-hide-btn{
+  display: flex !important;
+}
+
+.widget-hide-btn:hover{
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.98);
+}
+
+.widget-drag-handle:hover{
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.98);
+}
+
+/* FINAL ENFORCEMENT: hide panel in editing mode unless explicitly opened */
+body.layout-editing #layoutPanel:not([data-open="1"]) {
+  transform: translateX(110%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+body.layout-editing #layoutPanel[data-open="1"] {
+  transform: translateX(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  visibility: visible !important;
+  width: 650px !important;
+  max-width: calc(100vw - 60px) !important;
+  max-height: 75vh !important;
+}
+
+/* Theme the customize panel to match bg-popover glass style */
+#layoutPanel{
+  background: var(--card-bg) !important;
+  border: 1px solid var(--card-br) !important;
+  border-radius: 18px !important;
+  color: var(--text) !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  backdrop-filter: blur(30px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+/* internal header and title polish */
+#layoutPanel .layout-sidebar-head {
+  background: transparent !important;
+  padding: 0 14px 12px !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+#layoutPanel .layout-title { font-size: 18px !important; color: var(--text) !important; font-weight: 800 !important; margin-left: 4px !important; }
+#layoutPanel .layout-close { display: none !important; }
+#layoutPanel .layout-sub { color: var(--muted) !important; }
+
+/* Scrollbar for the panel (WebKit) */
+#layoutPanel::-webkit-scrollbar { width: 12px; }
+#layoutPanel::-webkit-scrollbar-track { background: transparent; }
+#layoutPanel::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+
+/* Smaller inner list scrollbars (if any) */
+#layoutPanel .layout-list::-webkit-scrollbar,
+#layoutPanel .layout-hidden::-webkit-scrollbar { width: 8px; }
+#layoutPanel .layout-list::-webkit-scrollbar-thumb,
+#layoutPanel .layout-hidden::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.06);
+  border-radius: 6px;
+}
+
+/* Scrollbars for new two-column layout */
+#layoutPanel .layout-sidebar::-webkit-scrollbar { width: 6px; }
+#layoutPanel .layout-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+}
+
+#layoutPanel .layout-content-body::-webkit-scrollbar { width: 6px; }
+#layoutPanel .layout-content-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+}
+
+/* Firefox scrollbar support */
+#layoutPanel { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.06) transparent; }
+
+/* Ensure buttons inside panel follow bg-popover tone */
+#layoutPanel .layout-done { 
+  display: none !important;
+}
+
+#layoutPanel .layout-btn,
+#layoutPanel .layout-btn-primary{
+  background: var(--btn-bg) !important;
+  border: 1px solid var(--btn-br) !important;
+  color: var(--text) !important;
+}
+
+#layoutPanel .layout-btn:hover,
+#layoutPanel .layout-btn-primary:hover{
+  filter: brightness(1.08) !important;
+}
+
+/* Widget resize button */
+.widget-resize-btn {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s;
+  display: none;
+}
+
+body.layout-editing .widget-resize-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.widget-resize-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.98);
+}
+
+/* Compact weather widget */
+#weather.widget-compact {
+  height: 140px !important;
+  width: 220px !important;
+  max-width: 100% !important;
+  padding: 12px 14px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+#weather.widget-compact .weather-row {
+  gap: 4px;
+  justify-content: center;
+}
+
+#weather.widget-compact .weather-left {
+  display: none;
+}
+
+#weather.widget-compact .weather-right {
+  gap: 6px;
+}
+
+#weather.widget-compact .weather-emoji {
+  font-size: 36px;
+}
+
+#weather.widget-compact .weather-temp {
+  font-size: 28px;
+}
+
+#weather.widget-compact .weather-geo {
+  display: inline-flex;
+}
+
+
+
+
+.onboarding{
+  position: fixed;
+  left: 24px;
+  bottom: 80px;
+  width: 360px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+  z-index: 9999;
+  color: #111;
+}
+
+.onboarding__header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 10px 14px;
+}
+
+.onboarding__title{
+  font-size: 14px;
+  font-weight: 600;
+  opacity: .9;
+}
+
+.onboarding__close{
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  opacity: .6;
+}
+.onboarding__close:hover{ opacity: 1; }
+
+.onboarding__content{
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 0 14px 14px 14px;
+}
+
+.onboarding__thumb{
+  height: 160px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+/* если хочешь картинку превью — замени фон: */
+.onboarding__thumb{
+  background-image: url("assets/tutorial-preview.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.onboarding__play{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 42px;
+  color: white;
+  text-shadow: 0 8px 18px rgba(0,0,0,0.5);
+}
+
+.onboarding__hint{
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: .75;
+}
+
+/* =========================
+   REVIEW MODAL
+========================= */
+.review-modal{
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9998;
+  display: block;
+  pointer-events: none;
+}
+
+.review-modal[hidden]{
+  display: none;
+}
+
+.review-backdrop{
+  display: none;
+}
+
+.review-card{
+  position: relative;
+  width: min(360px, calc(100vw - 40px));
+  background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04)), var(--card-bg);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+  padding: 18px 18px 16px;
+  pointer-events: auto;
+  animation: reviewSlideIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes reviewSlideIn {
+  from {
+    transform: translateY(12px) translateX(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) translateX(0);
+    opacity: 1;
+  }
+}
+
+.review-close{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.review-close:hover{
+  background: var(--btn-bg-hover);
+  transform: translateY(-1px);
+}
+
+.review-title{
+  margin: 0 34px 6px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.review-subtitle{
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.review-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.review-btn{
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.10);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-btn:hover{
+  background: var(--btn-bg-hover);
+  transform: translateY(-1px);
+}
+
+.review-btn.primary{
+  background: linear-gradient(135deg, rgba(255,255,255,0.28), rgba(255,255,255,0.12));
+  border-color: rgba(255,255,255,0.35);
+}
+
+.review-btn.primary:hover{
+  filter: brightness(1.05);
+}
+
+/* =========================
+   TUTORIAL MODAL (First Time)
+========================= */
+.tutorial-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  animation: tutorialFadeIn 0.3s ease-out;
+}
+
+.tutorial-modal[hidden]{
+  display: none;
+}
+
+@keyframes tutorialFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tutorial-backdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.tutorial-card{
+  position: relative;
+  width: min(680px, calc(100vw - 40px));
+  max-height: calc(100vh - 80px);
+  background: var(--card-bg);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--card-br);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  animation: tutorialSlideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes tutorialSlideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.tutorial-close{
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.tutorial-close:hover{
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.tutorial-title{
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text);
+  text-align: center;
+}
+
+.tutorial-subtitle{
+  margin: 0 0 24px 0;
+  font-size: 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.tutorial-video{
+  position: relative;
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.3);
+  margin-bottom: 24px;
+}
+
+.tutorial-video video{
+  width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+}
+
+.tutorial-btn{
+  width: 100%;
+  padding: 14px 24px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tutorial-btn:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.tutorial-btn:active{
+  transform: translateY(0);
+}
+
+.tutorial-faq-btn{
+  display: inline-block;
+  width: 100%;
+  padding: 14px 24px;
+  border: 1px solid var(--btn-br);
+  background: transparent;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 10px;
+}
+
+.tutorial-faq-btn:hover{
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.tutorial-faq-btn:active{
+  transform: translateY(0);
+}
+
+/* =========================================================
+   FIX: narrow screens should not force fixed grid rows
+   (prevents weather/clock overlap)
+========================================================= */
+@media (max-width: 1100px) {
+  #searchCard{
+    grid-column: 1 / -1 !important;
+    grid-row: auto !important;
+  }
+
+  #todoCard,
+  #weather,
+  #mapCard,
+  #dateCard,
+  #clockCard,
+  #audioCard{
+    grid-row: auto !important;
+  }
+}
+
+/* =========================================================
+   FIX: photos widgets must respect free-layout positioning
+========================================================= */
+.dash-area.free-layout .widget.photos{
+  position: absolute;
+}
+
+.theme-wallpapers-title{
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+
+.theme-wallpapers-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.theme-wallpaper-card{
+  border: 1px solid var(--card-br);
+  border-radius: 14px;
+  padding: 8px;
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.theme-wallpaper-card:hover{
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,0.36);
+}
+
+.theme-wallpaper-card.active{
+  border-color: rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.2);
+}
+
+.theme-wallpaper-preview{
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 8px;
+}
+
+.theme-wallpaper-name{
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Video theme styles */
+.theme-video-preview{
+  position: relative;
+}
+
+.theme-video-play-icon{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  color: rgba(255,255,255,0.9);
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  pointer-events: none;
+  transition: transform .2s ease;
+}
+
+.theme-wallpaper-card:hover .theme-video-play-icon{
+  transform: translate(-50%, -50%) scale(1.1);
+}
