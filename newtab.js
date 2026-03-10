@@ -2902,7 +2902,7 @@ async function applySavedOrDefaultBackground() {
   const st = loadBgState();
 
   if (!st) {
-    const def = assetUrl("assets/default-bg.jpg");
+    const def = assetUrl("assets/1.jpeg");
     saveBgState({ kind: "image", value: def, focus:{x:50,y:50}, rot:0 });
     setImageBackground(def);
     applyBgFocus({x:50,y:50}, 0);
@@ -2917,7 +2917,7 @@ async function applySavedOrDefaultBackground() {
         applyBgFocus(st.focus, st.rot);
         return;
       }
-      const def = assetUrl("assets/default-bg.jpg");
+      const def = assetUrl("assets/1.jpeg");
       saveBgState({ kind: "image", value: def, focus:{x:50,y:50}, rot:0 });
       setImageBackground(def);
       applyBgFocus({x:50,y:50}, 0);
@@ -2937,7 +2937,7 @@ async function applySavedOrDefaultBackground() {
       return;
     }
     // если blob пропал — откат к дефолту
-    const def = assetUrl("assets/default-bg.jpg");
+    const def = assetUrl("assets/1.jpeg");
     saveBgState({ kind: "image", value: def, focus:{x:50,y:50}, rot:0 });
     setImageBackground(def);
     applyBgFocus(st.focus, st.rot);
@@ -2954,7 +2954,7 @@ async function resetBackgroundToDefault() {
   cleanupBgMedia();
   await idbDel(BG_VIDEO_KEY).catch(() => {});
   await idbDel(BG_IMAGE_KEY).catch(() => {});
-  const def = assetUrl("assets/default-bg.jpg");
+  const def = assetUrl("assets/1.jpeg");
   saveBgState({ kind: "image", value: def, focus:{x:50,y:50}, rot:0 });
   setImageBackground(def);
   applyBgFocus({x:50,y:50}, 0);
@@ -3565,20 +3565,38 @@ function getVideoDurationSeconds(fileOrBlob) {
   let lastGroup = "";
 
 // ======================
-// FAVORITES (small=3 | large=6)
+// FAVORITES
 // ======================
-const FAV_KEY = "bm.favorites.v1";        // array up to 6
+const FAV_KEY = "bm.favorites.v1";
 const FAV_SIZE_KEY = "bm.favorites.size"; // "small" | "large"
+const FAV_COUNT_KEY = "bm.favorites.count";
+const FAV_MIN_SLOTS = 9;
+const FAV_MAX_SLOTS = 60;
+const FAV_ADD_STEP = 3;
 let favSize = "small";
+let favSlotCount = FAV_MIN_SLOTS;
 
-let favorites = [null, null, null, null, null, null, null, null, null];
+let favorites = Array.from({ length: FAV_MIN_SLOTS }, () => null);
 const favSlotsEl = document.getElementById("favSlots");
+const favAddMoreBtn = document.getElementById("favAddMoreBtn");
 let favPicker = null;
 let favPickerBm = null;
 let favPickerCleanup = null;
 
 function getFavSlotCount() {
-  return 9;
+  return favSlotCount;
+}
+
+function clampFavSlotCount(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return FAV_MIN_SLOTS;
+  return Math.max(FAV_MIN_SLOTS, Math.min(FAV_MAX_SLOTS, Math.round(n)));
+}
+
+function ensureFavoriteCapacity(targetCount) {
+  const need = clampFavSlotCount(targetCount);
+  while (favorites.length < need) favorites.push(null);
+  if (favorites.length > FAV_MAX_SLOTS) favorites = favorites.slice(0, FAV_MAX_SLOTS);
 }
 
 function applyFavSizeClass() {
@@ -3645,9 +3663,20 @@ async function setFavorite(slotIdx, bm) {
 async function saveFavSize() {
   await bmSet({ [FAV_SIZE_KEY]: favSize });
 }
+async function saveFavSlotCount() {
+  await bmSet({ [FAV_COUNT_KEY]: favSlotCount });
+}
+async function addMoreFavoriteSlots(step = FAV_ADD_STEP) {
+  const nextCount = clampFavSlotCount(getFavSlotCount() + Math.max(1, Number(step) || FAV_ADD_STEP));
+  if (nextCount === getFavSlotCount()) return;
+
+  favSlotCount = nextCount;
+  ensureFavoriteCapacity(favSlotCount);
+  await Promise.all([saveFavSlotCount(), saveFavorites()]);
+  renderFavoritesWidget();
+}
 function normalizeFavorites(v) {
-  const arr = Array.isArray(v) ? v.slice(0, 9) : [];
-  while (arr.length < 9) arr.push(null);
+  const arr = Array.isArray(v) ? v.slice(0, FAV_MAX_SLOTS) : [];
 
   return arr.map((x) => {
     if (!x || typeof x !== "object") return null;
@@ -3659,7 +3688,7 @@ function normalizeFavorites(v) {
   });
 }
 
-bmGet([BM_KEYS.bookmarks, BM_KEYS.groups, BM_KEYS.lastGroup, FAV_KEY, FAV_SIZE_KEY]).then((data) => {
+bmGet([BM_KEYS.bookmarks, BM_KEYS.groups, BM_KEYS.lastGroup, FAV_KEY, FAV_SIZE_KEY, FAV_COUNT_KEY]).then((data) => {
 
     bookmarks = Array.isArray(data[BM_KEYS.bookmarks]) ? data[BM_KEYS.bookmarks] : [];
     groups = (data[BM_KEYS.groups] && typeof data[BM_KEYS.groups] === "object") ? data[BM_KEYS.groups] : {};
@@ -3672,6 +3701,10 @@ bmGet([BM_KEYS.bookmarks, BM_KEYS.groups, BM_KEYS.lastGroup, FAV_KEY, FAV_SIZE_K
     if (changed) bmSet({ [BM_KEYS.bookmarks]: bookmarks });
 
     favorites = normalizeFavorites(data[FAV_KEY]);
+    const storedCount = clampFavSlotCount(data[FAV_COUNT_KEY]);
+    const usedSlots = favorites.reduce((last, item, idx) => (item ? idx + 1 : last), 0);
+    favSlotCount = Math.max(storedCount, Math.min(FAV_MAX_SLOTS, Math.max(FAV_MIN_SLOTS, usedSlots)));
+    ensureFavoriteCapacity(favSlotCount);
     renderFavoritesWidget();
 
     renderGroupSelect();
@@ -3695,8 +3728,14 @@ renderFavoritesWidget();
         }
         if (changes[FAV_KEY]) {
           favorites = normalizeFavorites(changes[FAV_KEY].newValue);
+          ensureFavoriteCapacity(favSlotCount);
           renderFavoritesWidget();
           renderBookmarks();
+        }
+        if (changes[FAV_COUNT_KEY]) {
+          favSlotCount = clampFavSlotCount(changes[FAV_COUNT_KEY].newValue);
+          ensureFavoriteCapacity(favSlotCount);
+          renderFavoritesWidget();
         }
         if (changes[BM_KEYS.lastGroup]) {
           lastGroup = changes[BM_KEYS.lastGroup].newValue || "";
@@ -3775,6 +3814,7 @@ function renderFavoritesWidget() {
   applyFavSizeClass();
 
   const slots = getFavSlotCount();
+  ensureFavoriteCapacity(slots);
 
   for (let i = 0; i < slots; i++) {
     const f = favorites[i];
@@ -3863,6 +3903,7 @@ const slotBtns = Array.from({ length: slots }, (_, i) => i)
       <div class="fav-picker-card">
         <div class="fav-picker-title">Pin to Favorites</div>
         <div class="fav-picker-slots">${slotBtns}</div>
+        <button class="fav-picker-more" type="button">Add more slots</button>
         <button class="fav-picker-cancel" type="button">Cancel</button>
       </div>
     `;
@@ -3897,6 +3938,12 @@ const slotBtns = Array.from({ length: slots }, (_, i) => i)
       });
     });
 
+    picker.querySelector(".fav-picker-more")?.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await addMoreFavoriteSlots();
+      showFavPicker(bm, anchorEl);
+    });
+
     picker.querySelector(".fav-picker-cancel").addEventListener("click", (e) => {
       e.stopPropagation();
       hideFavPicker();
@@ -3924,6 +3971,10 @@ const slotBtns = Array.from({ length: slots }, (_, i) => i)
       document.getElementById("workspace")?.classList.remove("help-open");
       document.getElementById("helpView")?.setAttribute("aria-hidden", "true");
     }
+  });
+
+  favAddMoreBtn?.addEventListener("click", async () => {
+    await addMoreFavoriteSlots();
   });
 
   function initHelpPanel() {
@@ -4676,99 +4727,25 @@ function getFeaturedOffsetY(data) {
 // Get all bundled photos from assets folder
 async function getBundledPhotos() {
   const bundledPhotos = [
-    'assets/default-bg.jpg',
+    'assets/1.jpeg',
+    'assets/2.jpeg',
     'assets/wallpaper-aurora.svg',
     'assets/wallpaper-sunset.svg',
     'assets/wallpaper-ocean.svg',
-    'assets/wallpaper-night.svg',
-    'assets/Galaxy Tab S11 Ultra Wallpaper 1.jpeg',
-    'assets/Galaxy Tab S11 Ultra Wallpaper 2.jpeg',
-    'assets/Huawei Mate XTs Wallpaper 10 YTECHB.jpg',
-    'assets/Huawei Mate XTs Wallpaper 3 YTECHB.jpg',
-    'assets/Huawei Mate XTs Wallpaper 7 YTECHB.jpg',
-    'assets/Huawei Mate XTs Wallpaper 8 YTECHB.jpg',
-    'assets/Huawei Mate XTs Wallpaper 9 YTECHB.jpg',
-    'assets/Moto G86 Power Wallpaper YTECHB 1.jpg',
-    'assets/Moto G86 Power Wallpaper YTECHB 2.jpg',
-    'assets/Moto G86 Power Wallpaper YTECHB 3.jpg',
-    'assets/Moto G86 Power Wallpaper YTECHB 4.jpg',
-    'assets/Moto G86 Power Wallpaper YTECHB 5.jpg',
-    'assets/Moto G86 Wallpaper YTECHB 1.jpg',
-    'assets/Moto G86 Wallpaper YTECHB 2.jpg',
-    'assets/Moto G86 Wallpaper YTECHB 3.jpg',
-    'assets/Moto G86 Wallpaper YTECHB 4.jpg',
-    'assets/Moto G86 Wallpaper YTECHB 5.jpg',
-    'assets/Pixel_10_Extra_blue_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_blue_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_iris_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_iris_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_limoncello_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_limoncello_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_obsidian_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Extra_obsidian_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Fallback_Green_Dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Fallback_Green_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Fallback_Sterling_Dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Fallback_Sterling_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Front_Green_Dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Front_Green_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_Fold_Front_Sterling_Dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_green_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_green_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_obsidian_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_obsidian_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_porcelain_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_porcelain_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_sterling_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_Extra_sterling_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_green_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_green_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_obsidian_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_obsidian_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_porcelain_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_porcelain_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_sterling_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_XL_sterling_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_green_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_green_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_obsidian_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_obsidian_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_porcelain_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_porcelain_light_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_sterling_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_Pro_sterling_light_MysticLeaks.jpg',
-    'assets/Pixel_10_blue_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_blue_light_MysticLeaks.jpg',
-    'assets/Pixel_10_iris_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_iris_light_MysticLeaks.jpg',
-    'assets/Pixel_10_limoncello_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_limoncello_light_MysticLeaks.jpg',
-    'assets/Pixel_10_obsidian_dark_MysticLeaks.jpg',
-    'assets/Pixel_10_obsidian_light_MysticLeaks.jpg',
-    'assets/Samsung Galaxy A07 Wallpaper 1 YTECHB.png',
-    'assets/Samsung Galaxy A07 Wallpaper 2 YTECHB.png',
-    'assets/Samsung Galaxy S25 FE DeX Wallpaper 1 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE DeX Wallpaper 2 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE DeX Wallpaper 4 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 1 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 2 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 3 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 4 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 5 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 6 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 7 YTECHB.jpg',
-    'assets/Samsung Galaxy S25 FE Wallpaper 8 YTECHB.jpg',
-    'assets/Samsung Galaxy Tab S10 Lite DeX Wallpaper 1 YTECHB.png',
-    'assets/Samsung Galaxy Tab S10 Lite Wallpaper 1 YTECHB.png',
-    'assets/Samsung Galaxy Tab S10 Lite Wallpaper 2 YTECHB.png',
-    'assets/black_lines_geometric_pattern_abstract_background_elegant_luxury.jpg',
-    'assets/black_white_wallpaper_with_black_background_with_floral_pattern.jpg',
-    'assets/cristina-gottardi-CSpjU6hYo_0-unsplash.jpg',
-    'assets/dark-geometric-pattern-design-background.jpg',
-    'assets/default-bg.jpg',
-    'assets/pack-desgners.jpg',
-    'assets/photo-black-background-with-noise-texture.jpg'
+    'assets/wallpaper-night.svg'
   ];
+
+  const pushRange = (start, end, ext) => {
+    for (let i = start; i <= end; i += 1) {
+      bundledPhotos.push(`assets/${i}.${ext}`);
+    }
+  };
+
+  pushRange(3, 64, 'jpg');
+  pushRange(65, 66, 'png');
+  pushRange(67, 77, 'jpg');
+  pushRange(78, 80, 'png');
+  pushRange(81, 87, 'jpg');
   
   return bundledPhotos;
 }
@@ -4825,8 +4802,12 @@ function saveWidgetSizes() {
       if (w.classList.contains('is-calendar')) {
         sizes[w.id] = 'date-calendar';
       }
-      if (w.classList.contains('search-compact')) {
-        sizes[w.id] = 'search-compact';
+      if (w.id === 'searchCard') {
+        if (w.classList.contains('search-small')) {
+          sizes[w.id] = 'search-small';
+        } else if (w.classList.contains('search-medium')) {
+          sizes[w.id] = 'search-medium';
+        }
       }
     });
   }
@@ -4860,8 +4841,14 @@ function loadWidgetSizes() {
             renderCalendar();
           }, 100);
         }
-        if (sizes[w.id] === 'search-compact') {
-          w.classList.add('search-compact');
+        if (w.id === 'searchCard') {
+          if (sizes[w.id] === 'search-small' || sizes[w.id] === 'search-compact') {
+            w.classList.add('search-small');
+            w.classList.remove('search-medium');
+          } else if (sizes[w.id] === 'search-medium') {
+            w.classList.add('search-medium');
+            w.classList.remove('search-small');
+          }
         }
       });
     }
@@ -5886,6 +5873,30 @@ const renderList = () => {
   let hiddenWidgets = new Set();
   let widgetOrder = [];
   let widgetPositions = {};
+
+  function getSearchSizeMode(searchCard) {
+    if (!searchCard) return "full";
+    if (searchCard.classList.contains("search-small") || searchCard.classList.contains("search-compact")) return "small";
+    if (searchCard.classList.contains("search-medium")) return "medium";
+    return "full";
+  }
+
+  function applySearchSizeMode(searchCard, mode) {
+    if (!searchCard) return;
+    const normalized = ["full", "medium", "small"].includes(mode) ? mode : "full";
+    searchCard.classList.remove("search-compact", "search-medium", "search-small");
+    if (normalized === "medium") searchCard.classList.add("search-medium");
+    if (normalized === "small") searchCard.classList.add("search-small");
+  }
+
+  function updateSearchSizeToggleButton(searchCard, btn) {
+    if (!btn) return;
+    const mode = getSearchSizeMode(searchCard);
+    if (mode === "full") btn.textContent = "F";
+    if (mode === "medium") btn.textContent = "M";
+    if (mode === "small") btn.textContent = "S";
+    btn.title = `Search size: ${mode}`;
+  }
   
   function loadLayoutConfig() {
     try {
@@ -5925,6 +5936,31 @@ const renderList = () => {
     });
   }
 
+  function applyResponsiveWidgetLayout(widget, width, height) {
+    if (!widget) return;
+    const w = Math.max(120, Number(width) || widget.offsetWidth || 120);
+    const h = Math.max(100, Number(height) || widget.offsetHeight || 100);
+
+    const cols = Math.max(1, Math.min(48, Math.floor((w - 24) / 92)));
+    const rows = Math.max(1, Math.min(64, Math.floor((h - 64) / 84)));
+
+    widget.style.setProperty("--widget-cols", String(cols));
+    widget.style.setProperty("--widget-rows", String(rows));
+
+    const favSlots = widget.querySelector(".fav-slots");
+    if (favSlots) {
+      const favCols = Math.max(1, Math.min(36, Math.floor((w - 28) / 78)));
+      widget.style.setProperty("--fav-cols", String(favCols));
+    }
+
+    const photosGrid = widget.querySelector(".photos-grid");
+    if (photosGrid) {
+      const photoCols = Math.max(2, Math.min(8, Math.floor((w - 30) / 112)));
+      widget.style.setProperty("--photos-cols", String(photoCols));
+      widget.style.setProperty("--photos-rows", String(rows));
+    }
+  }
+
   function syncWidgetPositionSize(widget) {
     if (!widget) return;
     const id = widget.id || widget.dataset.widget;
@@ -5950,22 +5986,6 @@ const renderList = () => {
       let widgetWidth = rect.width;
       let widgetHeight = rect.height;
 
-      // Special sizing for search widget in free layout
-      if (id === "searchCard") {
-        if (widget.classList.contains("search-compact")) {
-          widgetWidth = Math.min(420, dashWidth);
-          x = Math.max(0, Math.round((dashWidth - widgetWidth) / 2));
-        } else {
-          widgetWidth = dashWidth;
-          x = 0;
-        }
-      }
-
-      // Если виджет вылезает за правый край, смещаем его влево
-      if (x + widgetWidth > dashWidth) {
-        x = Math.max(0, dashWidth - widgetWidth - 10);
-      }
-
       // Не поднимаем виджет вверх при увеличении — лучше расширить область
       if (y < 0) {
         y = 0;
@@ -5976,9 +5996,11 @@ const renderList = () => {
       if (widget.style.position === "absolute") {
         widget.style.left = `${x}px`;
         widget.style.top = `${y}px`;
-        widget.style.width = `${widgetWidth}px`;
-        widget.style.height = `${widgetHeight}px`;
+        widget.style.setProperty("width", `${widgetWidth}px`, "important");
+        widget.style.setProperty("height", `${widgetHeight}px`, "important");
       }
+
+      applyResponsiveWidgetLayout(widget, widgetWidth, widgetHeight);
 
       // Обновляем минимальную высоту контейнера, чтобы большие виджеты не "улетали" вверх
       let maxBottom = 0;
@@ -6106,7 +6128,7 @@ const renderList = () => {
   }
 
   const THEME_WALLPAPERS = [
-    { id: "default", name: "Default", path: "assets/default-bg.jpg" },
+    { id: "default", name: "Default", path: "assets/1.jpeg" },
     { id: "aurora", name: "Aurora", path: "assets/wallpaper-aurora.svg" },
     { id: "sunset", name: "Sunset", path: "assets/wallpaper-sunset.svg" },
     { id: "ocean", name: "Ocean", path: "assets/wallpaper-ocean.svg" },
@@ -6118,6 +6140,8 @@ const renderList = () => {
     { id: "macos-ventura", name: "MacOS Ventura", path: "assets/video themes/MacOS Ventura Live Wallpaper - MoeWalls.mp4" },
     { id: "anime-purple-water", name: "Purple Water", path: "assets/video themes/anime-girl-purple-water-moewalls-com.mp4" }
   ];
+
+  let showAllThemeWallpapers = false;
 
   function applyThemeWallpaper(path) {
     const src = assetUrl(path);
@@ -6165,7 +6189,7 @@ const renderList = () => {
     renderThemeTab();
   }
 
-  function renderThemeTab() {
+  async function renderThemeTab() {
     const themeTab = $("layoutTabTheme");
     if (!themeTab) return;
 
@@ -6182,7 +6206,18 @@ const renderList = () => {
     const grid = document.createElement("div");
     grid.className = "theme-wallpapers-grid";
 
-    THEME_WALLPAPERS.forEach((wallpaper) => {
+    const allImages = await getBundledPhotos();
+    const allThemeWallpapers = allImages
+      .filter((path) => /\.(png|jpe?g|webp|gif|svg)$/i.test(path))
+      .map((path, idx) => ({
+        id: `asset-${idx + 1}`,
+        name: path.split("/").pop() || `Wallpaper ${idx + 1}`,
+        path
+      }));
+
+    const wallpapersToRender = showAllThemeWallpapers ? allThemeWallpapers : THEME_WALLPAPERS;
+
+    wallpapersToRender.forEach((wallpaper) => {
       const src = assetUrl(wallpaper.path);
       const card = document.createElement("button");
       card.type = "button";
@@ -6207,8 +6242,18 @@ const renderList = () => {
       grid.appendChild(card);
     });
 
+    const showMoreBtn = document.createElement("button");
+    showMoreBtn.type = "button";
+    showMoreBtn.className = "theme-show-more-btn";
+    showMoreBtn.textContent = showAllThemeWallpapers ? "Show less wallpapers" : "Show more wallpapers";
+    showMoreBtn.addEventListener("click", () => {
+      showAllThemeWallpapers = !showAllThemeWallpapers;
+      renderThemeTab();
+    });
+
     themeTab.appendChild(title);
     themeTab.appendChild(grid);
+    themeTab.appendChild(showMoreBtn);
 
     // Video Themes Section
     const videoTitle = document.createElement("div");
@@ -6394,6 +6439,16 @@ const renderList = () => {
       }
       
       widget.style.cursor = "grab";
+
+      if (!widget.querySelector('.widget-resize-grip')) {
+        const grip = document.createElement('div');
+        grip.className = 'widget-resize-grip';
+        grip.title = 'Drag to resize';
+        grip.textContent = '◢';
+        widget.appendChild(grip);
+      }
+
+      applyResponsiveWidgetLayout(widget, widget.offsetWidth, widget.offsetHeight);
       
       // Add hide button
       if (!widget.querySelector('.widget-hide-btn')) {
@@ -6476,8 +6531,7 @@ const renderList = () => {
         const sizeToggleBtn = widget.querySelector('#btnSearchSizeToggle');
         if (sizeToggleBtn) {
           sizeToggleBtn.removeAttribute('hidden');
-          const isCompact = widget.classList.contains('search-compact');
-          sizeToggleBtn.textContent = isCompact ? '⤢' : '⤡';
+          updateSearchSizeToggleButton(widget, sizeToggleBtn);
         }
       }
     }
@@ -6514,8 +6568,9 @@ const renderList = () => {
         w.style.position = "absolute";
         w.style.left = `${pos.x}px`;
         w.style.top = `${pos.y}px`;
-        if (pos.w) w.style.width = `${pos.w}px`;
-        if (pos.h) w.style.height = `${pos.h}px`;
+        if (pos.w) w.style.setProperty("width", `${pos.w}px`, "important");
+        if (pos.h) w.style.setProperty("height", `${pos.h}px`, "important");
+        applyResponsiveWidgetLayout(w, pos.w || w.offsetWidth, pos.h || w.offsetHeight);
         
         maxBottom = Math.max(maxBottom, pos.y + (pos.h || w.offsetHeight));
       });
@@ -6575,8 +6630,10 @@ const renderList = () => {
         w.style.position = "";
         w.style.left = "";
         w.style.top = "";
-        w.style.width = "";
-        w.style.height = "";
+        w.style.removeProperty("width");
+        w.style.removeProperty("height");
+        w.style.removeProperty("--widget-cols");
+        w.style.removeProperty("--widget-rows");
       });
     }
     
@@ -6694,6 +6751,8 @@ const renderList = () => {
           w.querySelector('.widget-hide-btn')?.remove();
           // Удалить кнопку resize
           w.querySelector('.widget-resize-btn')?.remove();
+          // Удалить grip resize
+          w.querySelector('.widget-resize-grip')?.remove();
           // Скрыть кнопку размера для даты
           const dateToggle = w.querySelector('#btnDateSizeToggle');
           if (dateToggle) dateToggle.hidden = true;
@@ -6858,6 +6917,65 @@ const renderList = () => {
       document.addEventListener("pointerup", onUp);
       document.addEventListener("pointercancel", onUp);
     }
+
+    function startResize(e, widget) {
+      if (!document.body.classList.contains("layout-editing")) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const id = widget.id || widget.dataset.widget;
+      if (!id) return;
+
+      const container = dashArea || dashboard;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startW = widget.offsetWidth;
+      const startH = widget.offsetHeight;
+      const minW = 80;
+      const minH = 70;
+      const maxW = 5000;
+      const maxH = 5000;
+
+      widget.style.zIndex = "1100";
+
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+
+        const nextW = Math.max(minW, Math.min(maxW, startW + dx));
+        const nextH = Math.max(minH, Math.min(maxH, startH + dy));
+
+        widget.style.setProperty("width", `${nextW}px`, "important");
+        widget.style.setProperty("height", `${nextH}px`, "important");
+        applyResponsiveWidgetLayout(widget, nextW, nextH);
+
+        const prev = widgetPositions[id] || { x: 0, y: 0 };
+        widgetPositions[id] = {
+          x: Number.isFinite(prev.x) ? prev.x : parseFloat(widget.style.left || "0") || 0,
+          y: Number.isFinite(prev.y) ? prev.y : parseFloat(widget.style.top || "0") || 0,
+          w: nextW,
+          h: nextH
+        };
+
+        const neededHeight = widgetPositions[id].y + nextH + 40;
+        if (container.scrollHeight < neededHeight) {
+          container.style.minHeight = `${Math.ceil(neededHeight)}px`;
+        }
+      };
+
+      const onUp = () => {
+        document.removeEventListener("pointermove", onMove);
+        document.removeEventListener("pointerup", onUp);
+        document.removeEventListener("pointercancel", onUp);
+        widget.style.zIndex = "";
+        saveLayoutConfig();
+      };
+
+      document.addEventListener("pointermove", onMove);
+      document.addEventListener("pointerup", onUp);
+      document.addEventListener("pointercancel", onUp);
+    }
     
     // Attach drag handlers to all widget handles
     function attachDragHandlers() {
@@ -6872,6 +6990,15 @@ const renderList = () => {
         handle.replaceWith(newHandle);
         
         newHandle.addEventListener("pointerdown", (e) => startDrag(e, widget));
+      });
+
+      dashboard.querySelectorAll(".widget-resize-grip").forEach(grip => {
+        const widget = grip.closest("[data-widget]");
+        if (!widget) return;
+
+        const nextGrip = grip.cloneNode(true);
+        grip.replaceWith(nextGrip);
+        nextGrip.addEventListener("pointerdown", (e) => startResize(e, widget));
       });
     }
     
@@ -6967,17 +7094,23 @@ initNotesWidget();
   
   // Load saved search size preference
   const savedSearchSize = localStorage.getItem('search.size');
-  if (savedSearchSize === 'compact' && searchCard) {
-    searchCard.classList.add('search-compact');
-    if (btnSearchSizeToggle) btnSearchSizeToggle.textContent = '⤢';
+  if (searchCard) {
+    const normalized =
+      (savedSearchSize === 'small' || savedSearchSize === 'compact') ? 'small' :
+      (savedSearchSize === 'medium') ? 'medium' :
+      'full';
+    applySearchSizeMode(searchCard, normalized);
+    updateSearchSizeToggleButton(searchCard, btnSearchSizeToggle);
   }
   
   btnSearchSizeToggle?.addEventListener("click", (ev) => {
     ev.stopPropagation();
-    searchCard?.classList.toggle("search-compact");
-    const isCompact = searchCard?.classList.contains("search-compact");
-    btnSearchSizeToggle.textContent = isCompact ? '⤢' : '⤡';
-    localStorage.setItem('search.size', isCompact ? 'compact' : 'full');
+    if (!searchCard) return;
+    const curr = getSearchSizeMode(searchCard);
+    const next = curr === 'full' ? 'medium' : curr === 'medium' ? 'small' : 'full';
+    applySearchSizeMode(searchCard, next);
+    updateSearchSizeToggleButton(searchCard, btnSearchSizeToggle);
+    localStorage.setItem('search.size', next);
     syncWidgetPositionSize(searchCard);
     saveWidgetSizes();
   });

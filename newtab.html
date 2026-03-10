@@ -101,8 +101,6 @@
       placeholder="Search or type a URL" autocomplete="off" data-i18n="widgets.searchPlaceholder" />
   </form>
   
-  <!-- кнопка переключения размера поиска (видна только в режиме customize) -->
-  <button class="search-size-toggle widget-control-btn" id="btnSearchSizeToggle" type="button" title="Toggle compact mode" hidden>⤢</button>
 </section>
 
 
@@ -292,6 +290,9 @@
 <section class="card fav widget" id="favCard" data-widget="favorites" data-title="Favorites">
   <h2 data-i18n="widgets.favorites">Favorites</h2>
   <div class="fav-slots" id="favSlots"></div>
+  <div class="fav-actions">
+    <button class="fav-more" id="favAddMoreBtn" type="button" title="Add more favorites">Add more</button>
+  </div>
 </section>
 
     <section class="card date-card widget" id="dateCard" data-widget="date">

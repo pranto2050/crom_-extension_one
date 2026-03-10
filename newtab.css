@@ -3167,6 +3167,29 @@ kbd{
   flex: 1;
   min-height: 0;
   justify-content: center;
+  align-content: start;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.fav-actions{
+  margin-top: 8px;
+  padding: 0 10px 6px;
+}
+
+.fav-more{
+  width: 100%;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fav-more:hover{
+  background: rgba(255,255,255,0.14);
 }
 
 .fav-slot{
@@ -3326,6 +3349,10 @@ body.layout-editing .fav-clear{
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
 .fav-pick-slot{
@@ -3378,6 +3405,22 @@ body.layout-editing .fav-clear{
 
 .fav-picker-cancel:hover{
   background: rgba(255,255,255,0.10);
+}
+
+.fav-picker-more{
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fav-picker-more:hover{
+  background: rgba(255,255,255,0.12);
 }
 /* Bookmarks: keep content above Windows taskbar */
 #bookmarksView{
@@ -3717,7 +3760,8 @@ body:not(.layout-editing) .widget-size{ display:none; }
 #favSlots{
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* каждый слот не должен раздуваться по высоте */
@@ -4493,11 +4537,21 @@ body:not(.layout-editing) .dash-area.free-layout .widget:not(#searchCard) {
   align-self: start;
 }
 
-/* Укороченная версия поиска - не занимает всю ширину */
+/* Search size modes: medium/small centered in column 2 */
+#searchCard.search-medium,
+#searchCard.search-small,
 #searchCard.search-compact{
   grid-column: 2 / 3;
-  max-width: 420px;
   justify-self: center;
+}
+
+#searchCard.search-medium{
+  max-width: 760px;
+}
+
+#searchCard.search-small,
+#searchCard.search-compact{
+  max-width: 420px;
 }
 
 /* Сдвигаем все "первые" виджеты на 1 строку вниз */
@@ -6424,6 +6478,22 @@ body.layout-editing .widget-resize-btn {
   font-weight: 600;
 }
 
+.theme-show-more-btn{
+  margin-top: 12px;
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--card-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.theme-show-more-btn:hover{
+  background: rgba(255,255,255,0.16);
+}
+
 /* Video theme styles */
 .theme-video-preview{
   position: relative;
@@ -6443,4 +6513,81 @@ body.layout-editing .widget-resize-btn {
 
 .theme-wallpaper-card:hover .theme-video-play-icon{
   transform: translate(-50%, -50%) scale(1.1);
+}
+
+body.layout-editing .widget-resize-grip{
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: nwse-resize;
+  user-select: none;
+  color: rgba(255,255,255,0.92);
+  background: rgba(0,0,0,0.42);
+  border: 1px solid rgba(255,255,255,0.18);
+  z-index: 12;
+}
+
+/* Favorites Css: keep responsive inner layout active in free-layout after saving customize. */
+.dash-area.free-layout #favCard .fav-slots,
+.dash-area.free-layout #favSlots{
+  --fav-tile-size: 56px;
+  grid-template-columns: repeat(var(--fav-cols, 3), var(--fav-tile-size)) !important;
+  grid-auto-rows: var(--fav-tile-size);
+  justify-content: center;
+  align-content: start;
+}
+
+.dash-area.free-layout .widget.photos .photos-grid{
+  --photos-tile-size: 92px;
+  grid-template-columns: repeat(var(--photos-cols, 3), var(--photos-tile-size)) !important;
+  grid-auto-rows: var(--photos-tile-size);
+  max-height: calc(var(--photos-rows, 2) * var(--photos-tile-size));
+  justify-content: center;
+  align-content: start;
+  overflow: auto;
+}
+
+/* Favorites Css: increase Favorites card size so items are easier to see and find quickly. */
+#favCard{
+  width: 280px !important;
+  height: 300px !important;
+  max-height: 300px !important;
+}
+
+/* Favorites Css: increase internal spacing (gap + padding) for clearer visual separation. */
+#favCard .fav-slots,
+#favSlots{
+  grid-template-columns: repeat(3, 56px) !important;
+  gap: 26px !important;
+  padding: 14px !important;
+  justify-content: center !important;
+  align-content: start !important;
+}
+
+/* Favorites Css: slightly larger tile/icon size to match the bigger card and spacing. */
+#favCard .fav-slot{
+  width: 56px;
+  height: 56px;
+}
+
+#favCard .fav-ico,
+#favCard .fav-add{
+  width: 56px;
+  height: 56px;
+}
+
+/* Favorites Css: in customize free-layout, remove all card size caps so each widget can be resized freely (smaller or larger). */
+.dash-area.free-layout > [data-widget]{
+  min-width: 80px !important;
+  min-height: 70px !important;
+  max-width: none !important;
+  max-height: none !important;
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
 }
